@@ -1,68 +1,99 @@
 import vim
+import re
 
 from geeknote.geeknote import *
 
-notebooks_buffer = 't:vim_geeknote_notebooks'
-tags_buffer      = 't:vim_geeknote_tags'
+#======================== Vimscript Entry-points =============================#
 
-def vim_geeknote_find():
-    Notes().find()
-
-def vim_geeknote_tags():
-    return GeekNote().findTags()
-
-def vim_geeknote_notebooks():
-    notebooks = GeekNote().findNotebooks()
-    for notebook in notebooks:
-        print notebook.name
+def vim_geeknote_activate_node():
+    current_line = vim.current.line
+    note = re.compile('\s+n.+ \[(.+)\]$')
+    m = note.match(current_line)
+    if m:
+        guid = m.group(1)
+        print GeekNote().getNote(guid)
+    else:
+        print "Opening something else: " + current_line
 
 def vim_geeknote_toggle():
-    global notebooks_buffer
-
-    vim_new_window_vsplit(notebooks_buffer, 30)
-
-    content = []
-    content.append("Notebooks:")
-    content.append("====================")
+    notebooks_buffer = 't:vim_geeknote_notebooks'
+    VimVerticalSplit(notebooks_buffer, 50)
+    explorer = Explorer()
 
     notebooks = GeekNote().findNotebooks()
     for notebook in notebooks:
-        content.append("N " + notebook.name)
+        explorer.add(notebook)
+    explorer.expandAll()
+    explorer.render()
 
-    vim.command('call append(0, {0})'.format(content))
-    vim.command('normal! 0')
-    vim.command('setlocal nomodifiable')
+#======================== Classes ============================================#
 
-    vim_new_window_hsplit(tags_buffer)
+class Explorer(object):
+    nodes = []
 
-    del content[:]
-    content.append("Tags:")
-    content.append("====================")
+    def add(self, notebook):
+        notes = GeeknoteGetNotes(notebook)
+        node  = {'notebook':notebook, 'notes':notes, 'expand':False}
+        self.nodes.append(node)
 
-    tags = GeekNote().findTags()
-    for tag in tags:
-        content.append("T " + tag.name)
+    def expandAll(self):
+        for node in self.nodes:
+            node['expand'] = True
 
-    vim.command('call append(0, {0})'.format(content))
-    vim.command('normal! 0')
-    vim.command('setlocal nomodifiable')
+    def render(self):
+        content = []
+        content.append("Notebooks:")
+        content.append("{:=^50}".format("="))
 
-def vim_new_window_vsplit(bufname, width):
+        for node in self.nodes:
+            notebook = node['notebook']
+            notes    = node['notes']
+
+            total = len(notes)
+            content.append('N {0} ({1})'.format(notebook.name, str(total)))
+
+            if node['expand']:
+                for note in notes:
+                    name = ""
+                    if hasattr(note, 'title'):
+                        name = note.title
+                    elif hasattr(note, 'name'):
+                        name = notes.name
+
+                    name = (name[:38] + '..') if len(name) > 40 else name
+                    line = "    n {:<40} [{}]".format(name, note.guid)
+                    content.append(line)
+
+        vim.command('call append(0, {0})'.format(content))
+        vim.command('setlocal nomodifiable')
+        vim.current.window.cursor = (1, 0)
+
+#======================== Geeknote Helper Functions  =========================#
+
+def GeeknoteGetNotes(notebook):
+    notes = []
+    results = Notes().get(None, None, notebook.name)
+    total = len(results.notes)
+    for key, note in enumerate(results.notes):
+        notes.append(note)
+    return notes
+
+#======================== Vim Helper Functions  ==============================#
+
+def VimVerticalSplit(bufname, width):
     vim.command('topleft vertical ' + str(width) + ' new')
     vim.command('setlocal winfixwidth')
     vim.command('edit {0}'.format(bufname))
-    vim.command('normal! ggdG')
-    vim.command('setlocal noswapfile')
-    vim.command('setlocal buftype=nofile')
-    vim.command('setlocal bufhidden=hide')
+
+    # Window options 
+    vim.current.window.options["wrap"] = False
+
+    # Buffer options
     vim.command('setfiletype geeknote')
 
-def vim_new_window_hsplit(bufname):
-    vim.command('belowright split new')
-    vim.command('setlocal winfixwidth')
-    vim.command('edit {0}'.format(bufname))
     vim.command('normal! ggdG')
     vim.command('setlocal noswapfile')
     vim.command('setlocal buftype=nofile')
     vim.command('setlocal bufhidden=hide')
-    vim.command('setfiletype geeknote')
+    vim.command('setlocal cursorline')
+

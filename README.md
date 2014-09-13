@@ -1,5 +1,7 @@
 # vim-geeknote
 
+Geeknote Plugin for Vim. Under active development, not yet functional.
+
 ## Installation
 
 Use your plugin manager of choice.
@@ -18,5 +20,4 @@ Use your plugin manager of choice.
 
 ## Todo
 
-1. Write a plugin
-2. Write documentation
+1. Everything

@@ -10,19 +10,20 @@ python sys.path.append(vim.eval('expand("<sfile>:h")'))
 "  Function(s)
 " -----------------------------------------------------------------------------
 
-function! GeeknoteFind()
-python << endOfPython
-from vim_geeknote import vim_geeknote_find
-vim_geeknote_find()
-endOfPython
-endfunction
-
-" -----------------------------------------------------------------------------
-
 function! GeeknoteToggle()
 python << endOfPython
 from vim_geeknote import vim_geeknote_toggle
 vim_geeknote_toggle()
+endOfPython
+exec "nnoremap <silent> <buffer> <cr> :call <SID>GeeknoteActivateNode()<cr>"
+endfunction
+
+" -----------------------------------------------------------------------------
+
+function! s:GeeknoteActivateNode()
+python << endOfPython
+from vim_geeknote import vim_geeknote_activate_node
+vim_geeknote_activate_node()
 endOfPython
 endfunction
 
@@ -30,5 +31,4 @@ endfunction
 "  Expose our commands to the user
 " -----------------------------------------------------------------------------
 "
-command! GnoteFind call GeeknoteFind()
-command! GnoteToggle call GeeknoteToggle()
+command! Geeknote call GeeknoteToggle()
