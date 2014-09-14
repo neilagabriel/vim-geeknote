@@ -1,34 +1,31 @@
-" -----------------------------------------------------------------------------
-" Add our plugin to the path
-" -----------------------------------------------------------------------------
-"
 python import sys
 python import vim
 python sys.path.append(vim.eval('expand("<sfile>:h")'))
 
-" -----------------------------------------------------------------------------
-"  Function(s)
-" -----------------------------------------------------------------------------
+" ---------------------- Functions --------------------------------------------
 
-function! GeeknoteToggle()
+function! Vim_GeeknoteToggle()
 python << endOfPython
-from vim_geeknote import vim_geeknote_toggle
-vim_geeknote_toggle()
+from vim_geeknote import GeeknoteToggle
+GeeknoteToggle()
 endOfPython
-exec "nnoremap <silent> <buffer> <cr> :call <SID>GeeknoteActivateNode()<cr>"
+exec "nnoremap <silent> <buffer> <cr> :call Vim_GeeknoteActivateNode()<cr>"
 endfunction
 
-" -----------------------------------------------------------------------------
-
-function! s:GeeknoteActivateNode()
+function! Vim_GeeknoteActivateNode()
 python << endOfPython
-from vim_geeknote import vim_geeknote_activate_node
-vim_geeknote_activate_node()
+from vim_geeknote import GeeknoteActivateNode
+GeeknoteActivateNode()
 endOfPython
 endfunction
 
-" -----------------------------------------------------------------------------
-"  Expose our commands to the user
-" -----------------------------------------------------------------------------
-"
-command! Geeknote call GeeknoteToggle()
+function! Vim_GeeknoteSaveNote()
+python << endOfPython
+from vim_geeknote import GeeknoteSaveNote
+GeeknoteSaveNote()
+endOfPython
+endfunction
+
+" ---------------------- User Commands ----------------------------------------
+
+command! Geeknote call Vim_GeeknoteToggle()

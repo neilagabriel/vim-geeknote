@@ -7,45 +7,9 @@ from geeknote.geeknote import *
 from geeknote.tools    import *
 from geeknote.editor   import Editor
 
+#======================== Globals ============================================#
+
 explorer = None
-
-#======================== Vimscript Entry-points =============================#
-
-def vim_geeknote_activate_node():
-    global explorer
-
-    current_line = vim.current.line
-
-    r = re.compile('N.+ \[(.+)\]$')
-    m = r.match(current_line)
-    if m:
-        guid = m.group(1)
-        explorer.toggle(guid)
-
-        row, col = vim.current.window.cursor
-        explorer.render()
-        vim.current.window.cursor = (row, col)
-
-    r = re.compile('\s+n.+ \[(.+)\]$')
-    m = r.match(current_line)
-    if m:
-        guid = m.group(1)
-        note = GeekNote().getNote(guid)
-        GeekNoteShowNote(note)
-        return
-
-def vim_geeknote_toggle():
-    global explorer
-
-    notebooks_buffer = 't:vim_geeknote_notebooks'
-    utils.vsplit(notebooks_buffer, 50)
-    explorer = Explorer()
-
-    notebooks = GeekNote().findNotebooks()
-    for notebook in notebooks:
-        explorer.add(notebook)
-    explorer.render()
-    vim.current.window.cursor = (1, 0)
 
 #======================== Classes ============================================#
 
@@ -104,7 +68,32 @@ class Explorer(object):
         vim.command('call append(0, {})'.format(content))
         vim.command('setlocal nomodifiable')
 
-#======================== Geeknote Helper Functions  =========================#
+#======================== Geeknote Functions  ================================#
+
+def GeeknoteActivateNode():
+    global explorer
+
+    current_line = vim.current.line
+
+    r = re.compile('N.+ \[(.+)\]$')
+    m = r.match(current_line)
+    if m:
+        guid = m.group(1)
+        explorer.toggle(guid)
+
+        row, col = vim.current.window.cursor
+        explorer.render()
+        vim.current.window.cursor = (row, col)
+
+        return
+
+    r = re.compile('\s+n.+ \[(.+)\]$')
+    m = r.match(current_line)
+    if m:
+        guid = m.group(1)
+        note = GeekNote().getNote(guid)
+        GeeknoteShowNote(note)
+        return
 
 def GeeknoteGetNotes(notebook):
     notes = []
@@ -114,7 +103,10 @@ def GeeknoteGetNotes(notebook):
         notes.append(note)
     return notes
 
-def GeekNoteShowNote(note):
+def GeeknoteSaveNote():
+    print "Saving to Geeknote not yet supported"
+
+def GeeknoteShowNote(note):
     prevWin        = utils.winnr('#')
     isPrevUsable   = utils.isWindowUsable(prevWin)
     firstUsableWin = utils.firstUsableWindow()
@@ -140,4 +132,18 @@ def GeekNoteShowNote(note):
     prevWin = utils.winnr('#')
     vim.command("exec {} . \"wincmd p\"".format(prevWin))
 
+    vim.command("autocmd BufWritePost {} :call Vim_GeeknoteSaveNote()".format(f.name))
+
+def GeeknoteToggle():
+    global explorer
+
+    notebooks_buffer = 't:vim_geeknote_notebooks'
+    utils.vsplit(notebooks_buffer, 50)
+    explorer = Explorer()
+
+    notebooks = GeekNote().findNotebooks()
+    for notebook in notebooks:
+        explorer.add(notebook)
+    explorer.render()
+    vim.current.window.cursor = (1, 0)
 
