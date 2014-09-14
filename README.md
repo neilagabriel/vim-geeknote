@@ -1,10 +1,15 @@
 # vim-geeknote
 
-Geeknote Plugin for Vim. Under active development, not yet functional.
+Geeknote Plugin for Vim. Under active development.
+
+## Supported Features
+
+1. Open notebook and note listing in a vertical split navigation pane.
+2. Open notes for reading by selecting them in the navigation pane.
 
 ## Installation
 
-Use your plugin manager of choice.
+1. Use your plugin manager of choice to install plugin..
 
 - [Pathogen](https://github.com/tpope/vim-pathogen)
   - `git clone https://github.com/neilagabriel/vim-geeknote ~/.vim/bundle/vim-geeknote`
@@ -17,6 +22,9 @@ Use your plugin manager of choice.
 - [vim-plug](https://github.com/junegunn/vim-plug)
   - Add `Plug 'https://github.com/neilagabriel/vim-geeknote'` to .vimrc
   - Run `:PlugInstall`
+
+2. Clone and install geeknote from [https://github.com/neilagabriel/geeknote](https://github.com/neilagabriel/geeknote). See [Geeknote](http://www.geeknote.me) webpage for installation
+   instructions. This is a temporary install step that will become unnecessary when my changes are merged into the mainline geeknote repository..
 
 ## Acknowledgments
 - [Geeknote](http://www.geeknote.me)
