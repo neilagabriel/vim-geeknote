@@ -18,12 +18,19 @@ Use your plugin manager of choice.
   - Add `Plug 'https://github.com/neilagabriel/vim-geeknote'` to .vimrc
   - Run `:PlugInstall`
 
+## Acknowledgments
+- [Geeknote](www.geeknote.me)
+- [The Nerd Tree](https://github.com/scrooloose/nerdtree)
+- [Vim Plugin Starter Kit](https://github.com/JarrodCTaylor/vim-plugin-starter-kit)
+
 ## Todo
 
-1. Support note creation and modification
-2. Support notebook creation
-3. Support note movement (notebook to notebook)
-4. Tag support
-5. Toggle close
-6. Temp-file cleanup
-7. ...
+- Support note creation and modification
+- Support notebook creation
+- Support note movement (notebook to notebook)
+- Tag support
+- Toggle close
+- Temp-file cleanup
+- Notebook expand/close in navigation tree
+- Evernote (re)sync
+- ...
