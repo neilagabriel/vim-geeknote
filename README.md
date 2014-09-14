@@ -19,7 +19,7 @@ Use your plugin manager of choice.
   - Run `:PlugInstall`
 
 ## Acknowledgments
-- [Geeknote](www.geeknote.me)
+- [Geeknote](http://www.geeknote.me)
 - [The Nerd Tree](https://github.com/scrooloose/nerdtree)
 - [Vim Plugin Starter Kit](https://github.com/JarrodCTaylor/vim-plugin-starter-kit)
 
