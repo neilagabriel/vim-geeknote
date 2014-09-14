@@ -22,6 +22,7 @@ class Explorer(object):
         notes = GeeknoteGetNotes(notebook)
         node  = {'notebook':notebook, 'notes':notes, 'expand':False}
         self.nodes.append(node)
+        self.nodes = sorted(self.nodes, key=lambda k: k['notebook'].name) 
 
         for note in notes:
             self.noteMap[note.guid] = notebook
