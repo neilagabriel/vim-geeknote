@@ -58,8 +58,8 @@ class Explorer(object):
             notes    = node['notes']
 
             total = len(notes)
-            line  = 'N {0} ({1})'.format(notebook.name, str(total))
-            content.append('{:<46} [{}]'.format(line, notebook.guid))
+            line  = '{0} ({1})'.format(notebook.name, str(total))
+            content.append('{:<44} [{}]'.format(line, notebook.guid))
 
             if node['expand']:
                 for note in notes:
@@ -70,7 +70,7 @@ class Explorer(object):
                         name = notes.name
 
                     name = (name[:38] + '..') if len(name) > 40 else name
-                    line = '    n {:<40} [{}]'.format(name, note.guid)
+                    line = '    {:<40} [{}]'.format(name, note.guid)
                     content.append(line)
 
         vim.command('call append(0, {})'.format(content))
@@ -83,7 +83,16 @@ def GeeknoteActivateNode():
 
     current_line = vim.current.line
 
-    r = re.compile('N.+ \[(.+)\]$')
+    r = re.compile('^\s+.+\[(.+)\]$')
+    m = r.match(current_line)
+    if m:
+        guid = m.group(1)
+        print "opening note: " + guid
+        note = GeekNote().getNote(guid)
+        GeeknoteOpenNote(note)
+        return
+
+    r = re.compile('^.+\[(.+)\]$')
     m = r.match(current_line)
     if m:
         guid = m.group(1)
@@ -93,14 +102,6 @@ def GeeknoteActivateNode():
         explorer.render()
         vim.current.window.cursor = (row, col)
 
-        return
-
-    r = re.compile('\s+n.+ \[(.+)\]$')
-    m = r.match(current_line)
-    if m:
-        guid = m.group(1)
-        note = GeekNote().getNote(guid)
-        GeeknoteOpenNote(note)
         return
 
 def GeeknoteGetNotes(notebook):
