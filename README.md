@@ -33,6 +33,5 @@
 - Tag support
 - Toggle close
 - Temp-file cleanup
-- Notebook expand/close in navigation tree
 - Evernote (re)sync
-- ...
+- Prettier navigation window
