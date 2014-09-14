@@ -20,4 +20,10 @@ Use your plugin manager of choice.
 
 ## Todo
 
-1. Everything
+1. Support note creation and modification
+2. Support notebook creation
+3. Support note movement (notebook to notebook)
+4. Tag support
+5. Toggle close
+6. Temp-file cleanup
+7. ...

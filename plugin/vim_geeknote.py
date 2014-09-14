@@ -1,7 +1,11 @@
 import vim
 import re
+import tempfile
+import utils
 
 from geeknote.geeknote import *
+from geeknote.tools    import *
+from geeknote.editor   import Editor
 
 #======================== Vimscript Entry-points =============================#
 
@@ -11,13 +15,12 @@ def vim_geeknote_activate_node():
     m = note.match(current_line)
     if m:
         guid = m.group(1)
-        print GeekNote().getNote(guid)
-    else:
-        print "Opening something else: " + current_line
+        note = GeekNote().getNote(guid)
+        GeekNoteShowNote(note)
 
 def vim_geeknote_toggle():
     notebooks_buffer = 't:vim_geeknote_notebooks'
-    VimVerticalSplit(notebooks_buffer, 50)
+    utils.vsplit(notebooks_buffer, 50)
     explorer = Explorer()
 
     notebooks = GeekNote().findNotebooks()
@@ -64,7 +67,7 @@ class Explorer(object):
                     line = "    n {:<40} [{}]".format(name, note.guid)
                     content.append(line)
 
-        vim.command('call append(0, {0})'.format(content))
+        vim.command('call append(0, {})'.format(content))
         vim.command('setlocal nomodifiable')
         vim.current.window.cursor = (1, 0)
 
@@ -78,22 +81,30 @@ def GeeknoteGetNotes(notebook):
         notes.append(note)
     return notes
 
-#======================== Vim Helper Functions  ==============================#
+def GeekNoteShowNote(note):
+    prevWin        = utils.winnr('#')
+    isPrevUsable   = utils.isWindowUsable(prevWin)
+    firstUsableWin = utils.firstUsableWindow()
 
-def VimVerticalSplit(bufname, width):
-    vim.command('topleft vertical ' + str(width) + ' new')
-    vim.command('setlocal winfixwidth')
-    vim.command('edit {0}'.format(bufname))
+    if (isPrevUsable is False) and (firstUsableWin == -1):
+        vim.command("exec {} . \"wincmd p\"".format(prevWin))
+        vim.command('vertical new')
+    else:
+        if isPrevUsable is False:
+            vim.command("exec {} . \"wincmd w\"".format(firstUsableWin))
+        else:
+            vim.command("exec \"wincmd p\"")
 
-    # Window options 
-    vim.current.window.options["wrap"] = False
+    text = Editor.ENMLtoText(note.content)
+    text = text + "\n"
+    text = tools.stdoutEncode(text)
 
-    # Buffer options
-    vim.command('setfiletype geeknote')
+    f = tempfile.NamedTemporaryFile(delete=False)
+    f.write(text)
+    f.close()
 
-    vim.command('normal! ggdG')
-    vim.command('setlocal noswapfile')
-    vim.command('setlocal buftype=nofile')
-    vim.command('setlocal bufhidden=hide')
-    vim.command('setlocal cursorline')
+    vim.command("edit {}".format(f.name))
+    prevWin = utils.winnr('#')
+    vim.command("exec {} . \"wincmd p\"".format(prevWin))
+
 
