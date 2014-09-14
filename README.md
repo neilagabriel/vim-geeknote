@@ -1,6 +1,6 @@
 # vim-geeknote
 
-Geeknote Plugin for Vim. Under active development.
+[Geeknote](http://www.geeknote.me) Plugin for Vim. Under active development.
 
 ## Supported Features
 
@@ -17,8 +17,8 @@ Geeknote Plugin for Vim. Under active development.
 - [Pathogen](https://github.com/tpope/vim-pathogen)
   - `git clone https://github.com/neilagabriel/vim-geeknote ~/.vim/bundle/vim-geeknote`
 
-2. Clone and install geeknote from [https://github.com/neilagabriel/geeknote](https://github.com/neilagabriel/geeknote). See [Geeknote](http://www.geeknote.me) webpage for installation
-   instructions. This is a temporary install step that will become unnecessary when my changes are merged into the mainline geeknote repository..
+2. Clone and install geeknote from my personal geeknote fork ([neilagabriel/geeknote](https://github.com/neilagabriel/geeknote)). See [Geeknote](http://www.geeknote.me) webpage for installation
+   instructions. This is a temporary install step that will become unnecessary when my changes are merged into the mainline geeknote repository.
 
 ## Acknowledgments
 - [Geeknote](http://www.geeknote.me)
