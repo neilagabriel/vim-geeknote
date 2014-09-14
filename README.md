@@ -8,6 +8,10 @@
 2. Open notes for reading by selecting them in the navigation pane.
 3. Editing note content.
 
+## Dependencies
+
+- Vim 7.4.364 or newer (issues observed with earlier versions)
+
 ## Installation
 
 1. Clone and install geeknote from my personal geeknote fork ([neilagabriel/geeknote](https://github.com/neilagabriel/geeknote)). See [Geeknote](http://www.geeknote.me) webpage for installation
