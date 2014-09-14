@@ -2,6 +2,9 @@ import vim
 
 #======================== Vim Helper Functions  ==============================#
 
+def autocmd(event, pattern, cmd):
+    vim.command("autocmd {} {} {}".format(event, pattern, cmd))
+
 def winnr(number=None):
     if number:
         vim.command("let l:num = winnr('{}')".format(number))

@@ -6,6 +6,7 @@
 
 1. Open notebook and note listing in a vertical split navigation pane.
 2. Open notes for reading by selecting them in the navigation pane.
+3. Editing note content.
 
 ## Installation
 
@@ -21,15 +22,17 @@
    instructions. This is a temporary install step that will become unnecessary when my changes are merged into the mainline geeknote repository.
 
 ## Acknowledgments
+
 - [Geeknote](http://www.geeknote.me)
 - [The Nerd Tree](https://github.com/scrooloose/nerdtree)
 - [Vim Plugin Starter Kit](https://github.com/JarrodCTaylor/vim-plugin-starter-kit)
 
 ## Todo
 
-- Support note creation and modification
-- Support notebook creation
-- Support note movement (notebook to notebook)
+- Note creation
+- Note title modification
+- Notebook creation
+- Note movement (notebook to notebook)
 - Tag support
 - Toggle close
 - Temp-file cleanup

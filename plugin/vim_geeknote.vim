@@ -19,10 +19,11 @@ GeeknoteActivateNode()
 endOfPython
 endfunction
 
-function! Vim_GeeknoteSaveNote()
+function! Vim_GeeknoteSaveNote(arg1)
 python << endOfPython
 from vim_geeknote import GeeknoteSaveNote
-GeeknoteSaveNote()
+filename = vim.eval("a:arg1")
+GeeknoteSaveNote(filename)
 endOfPython
 endfunction
 
