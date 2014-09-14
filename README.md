@@ -10,16 +10,18 @@
 
 ## Installation
 
-1. Use your plugin manager of choice to install plugin.
+1. Clone and install geeknote from my personal geeknote fork ([neilagabriel/geeknote](https://github.com/neilagabriel/geeknote)). See [Geeknote](http://www.geeknote.me) webpage for installation
+   instructions. This is a temporary install step that will become unnecessary when my changes are merged into the mainline geeknote repository.
+
+2. Login with geeknote ('geeknote login') and verify it is functional.
+
+3. Use your plugin manager of choice to install plugin.
 
 - [Vundle](https://github.com/gmarik/vundle)
   - Add `Bundle 'https://github.com/neilagabriel/vim-geeknote'` to .vimrc
   - Run `:BundleInstall`
 - [Pathogen](https://github.com/tpope/vim-pathogen)
   - `git clone https://github.com/neilagabriel/vim-geeknote ~/.vim/bundle/vim-geeknote`
-
-2. Clone and install geeknote from my personal geeknote fork ([neilagabriel/geeknote](https://github.com/neilagabriel/geeknote)). See [Geeknote](http://www.geeknote.me) webpage for installation
-   instructions. This is a temporary install step that will become unnecessary when my changes are merged into the mainline geeknote repository.
 
 ## Acknowledgments
 
