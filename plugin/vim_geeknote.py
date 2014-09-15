@@ -2,6 +2,7 @@ import vim
 import re
 import tempfile
 import utils
+import numbers
 
 from utils             import *
 from geeknote.geeknote import *
@@ -27,7 +28,12 @@ class Explorer(object):
 
     def add(self, notebook):
         notes = GeeknoteGetNotes(notebook)
-        node  = {'notebook':notebook, 'notes':notes, 'expand':False}
+        node  = {
+                    'notebook':notebook, 
+                    'notes':notes, 
+                    'expand':False,
+                    'row':-1
+                }
         self.nodes.append(node)
         self.nodes = sorted(self.nodes, 
                             key=lambda k: k['notebook'].name.lower())
@@ -38,6 +44,19 @@ class Explorer(object):
     def expandAll(self):
         for node in self.nodes:
             node['expand'] = True
+
+    def selectNotebook(self, notebook):
+        # Notebook index 
+        if isinstance(notebook, numbers.Number):
+            if notebook < len(self.nodes):
+                node = self.nodes[notebook]
+                vim.current.window.cursor = (node['row'], 0)
+                return
+        # Notebook instance
+        for node in self.nodes:
+            if node['notebook'].guid == notebook.guid:
+                vim.current.window.cursor = (node['row'], 0)
+                return
 
     def findNotebook(self, note):
         return self.noteMap[note.guid]
@@ -70,6 +89,7 @@ class Explorer(object):
         content.append('Notebooks:')
         content.append('{:=^50}'.format('='))
 
+        row = 3
         for node in self.nodes:
             notebook = node['notebook']
             notes    = node['notes']
@@ -80,6 +100,8 @@ class Explorer(object):
             if total > 0:
                 line += ' ({})'.format(str(total))
             content.append('{:<44} [{}]'.format(line, notebook.guid))
+            node['row'] = row
+            row += 1
 
             if node['expand']:
                 for note in notes:
@@ -92,6 +114,7 @@ class Explorer(object):
                     name = (name[:38] + '..') if len(name) > 40 else name
                     line = '    {:<40} [{}]'.format(name, note.guid)
                     content.append(line)
+                    row += 1
         self.buf.append(content, 0)
 
         # Do not all the user to modify the navigation buffer (for now).
@@ -150,6 +173,7 @@ def GeeknoteCreateNotebook(name):
         if notebook.name == name:
             explorer.add(notebook)
             explorer.render()
+            explorer.selectNotebook(notebook)
             return
 
     vim.command('echoerr "Unexpected error, could not find notebook"')
@@ -224,5 +248,5 @@ def GeeknoteToggle():
         explorer = Explorer(buf)
 
     explorer.render()
-    vim.current.window.cursor = (1, 0)
+    explorer.selectNotebook(0)
 
