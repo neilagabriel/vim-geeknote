@@ -3,6 +3,7 @@ import re
 import tempfile
 import utils
 
+from utils             import *
 from geeknote.geeknote import *
 from geeknote.tools    import *
 from geeknote.editor   import Editor
@@ -17,6 +18,12 @@ openNotes = {}
 class Explorer(object):
     nodes   = []
     noteMap = {}
+
+    def __init__(self, buf):
+        self.buf = buf
+        notebooks = GeekNote().findNotebooks()
+        for notebook in notebooks:
+            self.add(notebook)
 
     def add(self, notebook):
         notes = GeeknoteGetNotes(notebook)
@@ -47,10 +54,19 @@ class Explorer(object):
         if target:
             target['expand'] = not target['expand']
 
+    #
+    # Render the navigation buffer. Note that when this function returns,
+    # the focus will be in navigation window.
+    #
     def render(self):
-        vim.command('setlocal modifiable')
-        vim.command('normal! ggdG')
+        # Move to the window displaying the navigation buffer and stay there. 
+        setActiveBuffer(self.buf)
 
+        # Clear the navigation buffer to get rid of old content (if any).
+        self.buf.options['modifiable'] = True
+        clearBuffer(self.buf)
+
+        # Prepare the new content and append it to the navigation buffer.
         content = []
         content.append('Notebooks:')
         content.append('{:=^50}'.format('='))
@@ -77,17 +93,23 @@ class Explorer(object):
                     name = (name[:38] + '..') if len(name) > 40 else name
                     line = '    {:<40} [{}]'.format(name, note.guid)
                     content.append(line)
+        self.buf.append(content, 0)
 
-        vim.command('call append(0, {})'.format(content))
-        vim.command('setlocal nomodifiable')
+        # Do not all the user to modify the navigation buffer (for now).
+        self.buf.options['modifiable'] = False
 
 #======================== Geeknote Functions  ================================#
 
 def GeeknoteActivateNode():
     global explorer
 
+    #
+    # Look at the current line in the navigation window (active) determine if
+    # it is a note or a notebook.
+    #
     current_line = vim.current.line
 
+    # If the line is a note, open it.
     r = re.compile('^\s+.+\[(.+)\]$')
     m = r.match(current_line)
     if m:
@@ -96,12 +118,17 @@ def GeeknoteActivateNode():
         GeeknoteOpenNote(note)
         return
 
+    # If the line is a notebook, toggle it (expand/close).
     r = re.compile('^[\+-].+\[(.+)\]$')
     m = r.match(current_line)
     if m:
         guid = m.group(1)
         explorer.toggle(guid)
 
+        #
+        # Rerender the navigation window. Keep the current cursor postion and
+        # leave the active window set to the navigation window.
+        #
         row, col = vim.current.window.cursor
         explorer.render()
         vim.current.window.cursor = (row, col)
@@ -124,7 +151,10 @@ def GeeknoteCreateNotebook(name):
     for notebook in notebooks:
         if notebook.name == name:
             explorer.add(notebook)
+
+            prevWin = getActiveWindow()
             explorer.render()
+            setActiveWindow(prevWin)
             return
 
     vim.command('echoerr "Unexpected error, could not find notebook"')
@@ -158,18 +188,15 @@ def GeeknoteSaveNote(filename):
 def GeeknoteOpenNote(note):
     global openNotes
 
-    prevWin        = utils.winnr('#')
-    isPrevUsable   = utils.isWindowUsable(prevWin)
-    firstUsableWin = utils.firstUsableWindow()
+    prevWin        = getPreviousWindow()
+    isPrevUsable   = isWindowUsable(prevWin)
+    firstUsableWin = firstUsableWindow()
 
+    setActiveWindow(prevWin)
     if (isPrevUsable is False) and (firstUsableWin == -1):
-        vim.command('exec {} . "wincmd p"'.format(prevWin))
         vim.command('vertical new')
-    else:
-        if isPrevUsable is False:
-            vim.command('exec {} . "wincmd w"'.format(firstUsableWin))
-        else:
-            vim.command('exec "wincmd p"')
+    elif isPrevUsable is False:
+        setActiveWindow(firstUsableWin)
 
     text = Editor.ENMLtoText(note.content)
     text = text + '\n'
@@ -180,26 +207,27 @@ def GeeknoteOpenNote(note):
     f.close()
 
     vim.command('edit {}'.format(f.name))
-    prevWin = utils.winnr('#')
-    vim.command('exec {} . "wincmd p"'.format(prevWin))
+    prevWin = getPreviousWindow()
+    setActiveWindow(prevWin)
 
-    utils.autocmd(
-        'BufWritePost', 
-        f.name, 
-        ':call Vim_GeeknoteSaveNote("{}")'.format(f.name))
+    autocmd('BufWritePost', 
+            f.name, 
+            ':call Vim_GeeknoteSaveNote("{}")'.format(f.name))
 
     openNotes[f.name] = note
 
 def GeeknoteToggle():
     global explorer
 
-    notebooks_buffer = 't:vim_geeknote_notebooks'
-    utils.vsplit(notebooks_buffer, 50)
-    explorer = Explorer()
+    if explorer is None:
+        vsplit('t:explorer', 50)
+        buf = vim.current.buffer
 
-    notebooks = GeekNote().findNotebooks()
-    for notebook in notebooks:
-        explorer.add(notebook)
+        noremap("<silent> <buffer> <cr>", 
+                ":call Vim_GeeknoteActivateNode()<cr>")
+
+        explorer = Explorer(buf)
+
     explorer.render()
     vim.current.window.cursor = (1, 0)
 
