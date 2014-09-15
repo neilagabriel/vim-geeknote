@@ -22,7 +22,8 @@ class Explorer(object):
         notes = GeeknoteGetNotes(notebook)
         node  = {'notebook':notebook, 'notes':notes, 'expand':False}
         self.nodes.append(node)
-        self.nodes = sorted(self.nodes, key=lambda k: k['notebook'].name.lower())
+        self.nodes = sorted(self.nodes, 
+                            key=lambda k: k['notebook'].name.lower())
 
         for note in notes:
             self.noteMap[note.guid] = notebook
@@ -88,7 +89,6 @@ def GeeknoteActivateNode():
     m = r.match(current_line)
     if m:
         guid = m.group(1)
-        print "opening note: " + guid
         note = GeekNote().getNote(guid)
         GeeknoteOpenNote(note)
         return
