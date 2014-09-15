@@ -58,9 +58,10 @@ class Explorer(object):
         for node in self.nodes:
             notebook = node['notebook']
             notes    = node['notes']
+            total    = len(notes)
 
-            total = len(notes)
-            line  = '{0} ({1})'.format(notebook.name, str(total))
+            line  = '-' if node['expand'] or total == 0 else '+'
+            line += ' {0} ({1})'.format(notebook.name, str(total))
             content.append('{:<44} [{}]'.format(line, notebook.guid))
 
             if node['expand']:
@@ -93,7 +94,7 @@ def GeeknoteActivateNode():
         GeeknoteOpenNote(note)
         return
 
-    r = re.compile('^.+\[(.+)\]$')
+    r = re.compile('^[\+-].+\[(.+)\]$')
     m = r.match(current_line)
     if m:
         guid = m.group(1)
@@ -102,7 +103,6 @@ def GeeknoteActivateNode():
         row, col = vim.current.window.cursor
         explorer.render()
         vim.current.window.cursor = (row, col)
-
         return
 
 def GeeknoteCreateNotebook(name):
