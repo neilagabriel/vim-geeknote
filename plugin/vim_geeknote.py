@@ -61,7 +61,9 @@ class Explorer(object):
             total    = len(notes)
 
             line  = '-' if node['expand'] or total == 0 else '+'
-            line += ' {0} ({1})'.format(notebook.name, str(total))
+            line += ' {}'.format(notebook.name)
+            if total > 0:
+                line += ' ({})'.format(str(total))
             content.append('{:<44} [{}]'.format(line, notebook.guid))
 
             if node['expand']:
