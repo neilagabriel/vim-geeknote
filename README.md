@@ -4,9 +4,10 @@
 
 ## Supported Features
 
-1. Open notebook and note listing in a vertical split navigation pane.
-2. Open notes for reading by selecting them in the navigation pane.
-3. Editing note content.
+- Open notebook and note listing in a vertical split navigation pane.
+- Open notes for reading by selecting them in the navigation pane.
+- Notebook creation
+- Editing note content.
 
 ## Dependencies
 
@@ -37,10 +38,11 @@
 
 - Note creation
 - Note title modification
-- Notebook creation
 - Note movement (notebook to notebook)
 - Tag support
 - Toggle close
 - Temp-file cleanup
 - Evernote (re)sync
 - Prettier navigation window
+- Improved notebook creation process
+- Vim help

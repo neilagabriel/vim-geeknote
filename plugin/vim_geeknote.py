@@ -22,7 +22,7 @@ class Explorer(object):
         notes = GeeknoteGetNotes(notebook)
         node  = {'notebook':notebook, 'notes':notes, 'expand':False}
         self.nodes.append(node)
-        self.nodes = sorted(self.nodes, key=lambda k: k['notebook'].name) 
+        self.nodes = sorted(self.nodes, key=lambda k: k['notebook'].name.lower())
 
         for note in notes:
             self.noteMap[note.guid] = notebook
@@ -104,6 +104,28 @@ def GeeknoteActivateNode():
         vim.current.window.cursor = (row, col)
 
         return
+
+def GeeknoteCreateNotebook(name):
+    name = name.strip('\"')
+    try:
+        result = Notebooks().create(name)
+        if result is False:
+            vim.command('echoerr "Failed to create notebook"')
+            return
+    except:
+        vim.command('echoerr "Failed to create notebook"')
+
+    if explorer is None:
+        return
+
+    notebooks = GeekNote().findNotebooks()
+    for notebook in notebooks:
+        if notebook.name == name:
+            explorer.add(notebook)
+            explorer.render()
+            return
+
+    vim.command('echoerr "Unexpected error, could not find notebook"')
 
 def GeeknoteGetNotes(notebook):
     notes = []
