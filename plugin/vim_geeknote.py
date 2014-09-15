@@ -54,11 +54,10 @@ class Explorer(object):
         if target:
             target['expand'] = not target['expand']
 
-    #
-    # Render the navigation buffer. Note that when this function returns,
-    # the focus will be in navigation window.
-    #
+    # Render the navigation buffer in the navigation window..
     def render(self):
+        prevWin = getActiveWindow()
+
         # Move to the window displaying the navigation buffer and stay there. 
         setActiveBuffer(self.buf)
 
@@ -98,6 +97,8 @@ class Explorer(object):
         # Do not all the user to modify the navigation buffer (for now).
         self.buf.options['modifiable'] = False
 
+        setActiveWindow(prevWin)
+
 #======================== Geeknote Functions  ================================#
 
 def GeeknoteActivateNode():
@@ -125,10 +126,7 @@ def GeeknoteActivateNode():
         guid = m.group(1)
         explorer.toggle(guid)
 
-        #
-        # Rerender the navigation window. Keep the current cursor postion and
-        # leave the active window set to the navigation window.
-        #
+        # Rerender the navigation window. Keep the current cursor postion.
         row, col = vim.current.window.cursor
         explorer.render()
         vim.current.window.cursor = (row, col)
@@ -151,10 +149,7 @@ def GeeknoteCreateNotebook(name):
     for notebook in notebooks:
         if notebook.name == name:
             explorer.add(notebook)
-
-            prevWin = getActiveWindow()
             explorer.render()
-            setActiveWindow(prevWin)
             return
 
     vim.command('echoerr "Unexpected error, could not find notebook"')
@@ -188,6 +183,7 @@ def GeeknoteSaveNote(filename):
 def GeeknoteOpenNote(note):
     global openNotes
 
+    origWin        = getActiveWindow()
     prevWin        = getPreviousWindow()
     isPrevUsable   = isWindowUsable(prevWin)
     firstUsableWin = firstUsableWindow()
@@ -207,8 +203,7 @@ def GeeknoteOpenNote(note):
     f.close()
 
     vim.command('edit {}'.format(f.name))
-    prevWin = getPreviousWindow()
-    setActiveWindow(prevWin)
+    setActiveWindow(origWin)
 
     autocmd('BufWritePost', 
             f.name, 

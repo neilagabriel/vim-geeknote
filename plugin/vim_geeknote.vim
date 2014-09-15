@@ -9,7 +9,6 @@ python << endOfPython
 from vim_geeknote import GeeknoteToggle
 GeeknoteToggle()
 endOfPython
-exec "nnoremap <silent> <buffer> <cr> :call Vim_GeeknoteActivateNode()<cr>"
 endfunction
 
 function! Vim_GeeknoteActivateNode()
