@@ -26,6 +26,14 @@ GeeknoteCreateNotebook(name)
 endOfPython
 endfunction
 
+function! Vim_GeeknoteCreateNote(arg1)
+python << endOfPython
+from vim_geeknote import GeeknoteCreateNote
+name = vim.eval("a:arg1")
+GeeknoteCreateNote(name)
+endOfPython
+endfunction
+
 function! Vim_GeeknoteSaveNote(arg1)
 python << endOfPython
 from vim_geeknote import GeeknoteSaveNote
@@ -38,3 +46,4 @@ endfunction
 
 command!          Geeknote               call Vim_GeeknoteToggle()
 command! -nargs=1 GeeknoteCreateNotebook call Vim_GeeknoteCreateNotebook(<f-args>)
+command! -nargs=1 GeeknoteCreateNote     call Vim_GeeknoteCreateNote(<f-args>)
