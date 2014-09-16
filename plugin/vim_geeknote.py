@@ -42,6 +42,7 @@ class Explorer(object):
     def __init__(self, buf):
         self.buf = buf
         self.refresh()
+        self.closeAll()
 
     def add(self, notebook):
         notes = GeeknoteGetNotes(notebook)
@@ -62,7 +63,10 @@ class Explorer(object):
                     'row':-1
                 })
 
-        self.expandState[notebook.guid] = False
+    def closeAll(self):
+        for node in self.nodes:
+            notebook = node['notebook']
+            self.expandState[notebook.guid] = False
 
     def expandAll(self):
         for node in self.nodes:
@@ -363,8 +367,7 @@ def GeeknoteToggle():
     global explorer
 
     if explorer is None:
-        #vsplit('t:explorer', 50)
-        vsplit('t:explorer', 80)
+        vsplit('t:explorer', 50)
         buf = vim.current.buffer
 
         noremap("<silent> <buffer> <cr>", 
