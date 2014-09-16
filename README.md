@@ -11,6 +11,10 @@
 
 - Vim 7.4.364 or newer (issues observed with earlier versions)
 
+## Known Issues
+
+- Depending on formatting, note content is sometimes lost when saving notes. The data may be retrieved by reading the temp file that was created for the note (most often under /temp).
+  
 ## Installation
 
 1. Clone and install geeknote from my personal geeknote fork ([neilagabriel/geeknote](https://github.com/neilagabriel/geeknote)). See [Geeknote](http://www.geeknote.me) webpage for installation
