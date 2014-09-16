@@ -42,10 +42,10 @@ class Explorer(object):
     def __init__(self, buf):
         self.buf = buf
         self.refresh()
-        self.closeAll()
 
-    def add(self, notebook):
+    def addNotebook(self, notebook):
         notes = GeeknoteGetNotes(notebook)
+        notes = sorted(notes, key=lambda n: n.title)
         node  = {
                     'notebook':notebook, 
                     'notes':notes, 
@@ -54,6 +54,9 @@ class Explorer(object):
         self.nodes.append(node)
         self.nodes = sorted(self.nodes, 
                             key=lambda k: k['notebook'].name.lower())
+
+        if notebook.guid not in self.expandState:
+            self.expandState[notebook.guid] = False
 
         for note in notes:
             self.noteMap[note.guid] = (
@@ -70,8 +73,13 @@ class Explorer(object):
 
     def expandAll(self):
         for node in self.nodes:
-            notebook = node['notebook']
-            self.expandState[notebook.guid] = True
+            self.expandNotebook(node['notebook'].guid)
+
+    def expandNotebook(self, guid):
+        self.expandState[guid] = True
+
+    def getBuffer(self):
+        return self.buf
 
     def getNotebook(self, guid):
         for node in self.nodes:
@@ -124,29 +132,38 @@ class Explorer(object):
 
         notebooks = GeekNote().findNotebooks()
         for notebook in notebooks:
-            self.add(notebook)
+            self.addNotebook(notebook)
 
-    # TODO: save/restore window
     def selectNotebook(self, notebook):
+        origWin = getActiveWindow()
+        setActiveBuffer(self.buf)
+
         # Notebook index 
         if isinstance(notebook, numbers.Number):
             if notebook < len(self.nodes):
                 node = self.nodes[notebook]
                 vim.current.window.cursor = (node['row'], 0)
-                return
+
         # Notebook instance
-        for node in self.nodes:
-            if node['notebook'].guid == notebook.guid:
-                vim.current.window.cursor = (node['row'], 0)
-                return
+        else:
+            for node in self.nodes:
+                if node['notebook'].guid == notebook.guid:
+                    vim.current.window.cursor = (node['row'], 0)
+                    break
 
-    # TODO: save/restore window
+        setActiveWindow(origWin)
+
     def selectNote(self, note):
-         row = self.noteMap[note.guid]['row']
-         if row >= 0:
-             vim.current.window.cursor = (row, 0)
+        origWin = getActiveWindow()
+        setActiveBuffer(self.buf)
 
-    def toggle(self, guid):
+        row = self.noteMap[note.guid]['row']
+        if row >= 0:
+            vim.current.window.cursor = (row, 0)
+
+        setActiveWindow(origWin)
+
+    def toggleNotebook(self, guid):
         target = None
 
         for node in self.nodes:
@@ -160,7 +177,7 @@ class Explorer(object):
 
     # Render the navigation buffer in the navigation window..
     def render(self):
-        prevWin = getActiveWindow()
+        origWin = getActiveWindow()
 
         # Move to the window displaying the navigation buffer.
         setActiveBuffer(self.buf)
@@ -191,12 +208,7 @@ class Explorer(object):
 
             if expand is True:
                 for note in notes:
-                    name = ''
-                    if hasattr(note, 'title'):
-                        name = note.title
-                    elif hasattr(note, 'name'):
-                        name = notes.name
-
+                    name = note.title
                     name = (name[:38] + '..') if len(name) > 40 else name
                     line = '    {:<40} [{}]'.format(name, note.guid)
                     content.append(line)
@@ -208,13 +220,11 @@ class Explorer(object):
         self.buf.options['modifiable'] = False
 
         # Return to the previously active window.
-        setActiveWindow(prevWin)
+        setActiveWindow(origWin)
 
 #======================== Geeknote Functions  ================================#
 
 def GeeknoteActivateNode():
-    global explorer
-
     #
     # Look at the current line in the navigation window (active) determine if
     # it is a note or a notebook.
@@ -227,7 +237,21 @@ def GeeknoteActivateNode():
     if m:
         guid = m.group(1)
         note = GeekNote().getNote(guid)
+
+        origWin        = getActiveWindow()
+        prevWin        = getPreviousWindow()
+        isPrevUsable   = isWindowUsable(prevWin)
+        firstUsableWin = firstUsableWindow()
+     
+        setActiveWindow(prevWin)
+        if (isPrevUsable is False) and (firstUsableWin == -1):
+            vim.command('botright vertical new')
+        elif isPrevUsable is False:
+            setActiveWindow(firstUsableWin)
+
         GeeknoteOpenNote(note)
+
+        setActiveWindow(origWin)
         return
 
     # If the line is a notebook, toggle it (expand/close).
@@ -235,7 +259,7 @@ def GeeknoteActivateNode():
     m = r.match(current_line)
     if m:
         guid = m.group(1)
-        explorer.toggle(guid)
+        explorer.toggleNotebook(guid)
 
         # Rerender the navigation window. Keep the current cursor postion.
         row, col = vim.current.window.cursor
@@ -244,8 +268,6 @@ def GeeknoteActivateNode():
         return
 
 def GeeknoteCreateNote(name):
-    global explorer
-
     name = name.strip('"\'')
     if explorer is None:
         GeeknoteToggle()
@@ -258,10 +280,17 @@ def GeeknoteCreateNote(name):
         vim.command('echoerr "Please select a notebook first."')
         return
 
+    origWin = getActiveWindow()
+    if isWindowUsable(origWin) is False:
+        prevWin = getPreviousWindow()
+        setActiveWindow(prevWin)
+        if isWindowUsable(prevWin) is False:
+            vim.command('botright vertical new')
+
     GeeknoteOpenNote(None, name, notebook)
 
 def GeeknoteCreateNotebook(name):
-    name = name.strip('\"\'')
+    name = name.strip('"\'')
     try:
         result = Notebooks().create(name)
         if result is False:
@@ -276,7 +305,7 @@ def GeeknoteCreateNotebook(name):
     notebooks = GeekNote().findNotebooks()
     for notebook in notebooks:
         if notebook.name == name:
-            explorer.add(notebook)
+            explorer.addNotebook(notebook)
             explorer.render()
             explorer.selectNotebook(notebook)
             return
@@ -292,8 +321,6 @@ def GeeknoteGetNotes(notebook):
     return notes
 
 def GeeknoteSaveNote(filename):
-    global openNotes
-
     result   = False
     note     = openNotes[filename]['note']
     title    = openNotes[filename]['title']
@@ -306,36 +333,41 @@ def GeeknoteSaveNote(filename):
     inputData['tags']     = None
     inputData['notebook'] = notebook.guid
 
+    # Saving an existing note.
     if note is not None:
         result = bool(User().getEvernote().updateNote(
             guid=note.guid, **inputData))
+
+    # Saving a new note.
     else:
-        result = User().getEvernote().createNote(**inputData)
-        explorer.refresh()
-        explorer.toggle(notebook.guid)
-        explorer.render()
-        #explorer.selectNote(note.guid)
+        result = bool(User().getEvernote().createNote(**inputData))
+        if result is True:
+            explorer.refresh()
+            explorer.expandNotebook(notebook.guid)
+            explorer.render()
+
+            #
+            # Find the newly created node and select it in navigation window.
+            # Since note titles do not need to be unique, rely on the fact that
+            # Geeknote will return the notes in order of their creation date
+            # (oldest to newest).
+            #
+            notes = GeeknoteGetNotes(notebook)
+            for n in notes:
+                if n.title == title:
+                    note = n
+            explorer.selectNote(note)
 
     if result is False:
         vim.command('echoerr "Failed to save note"')
 
-def GeeknoteOpenNote(note, title=None, notebook=None):
-    global openNotes
+    return result
 
+# Open an existing or new note in the active window.
+def GeeknoteOpenNote(note, title=None, notebook=None):
     if note is not None:
         title    = note.title
         notebook = explorer.getContainingNotebook(note.guid)
-
-    origWin        = getActiveWindow()
-    prevWin        = getPreviousWindow()
-    isPrevUsable   = isWindowUsable(prevWin)
-    firstUsableWin = firstUsableWindow()
-
-    setActiveWindow(prevWin)
-    if (isPrevUsable is False) and (firstUsableWin == -1):
-        vim.command('vertical new')
-    elif isPrevUsable is False:
-        setActiveWindow(firstUsableWin)
 
     f = tempfile.NamedTemporaryFile(delete=False)
 
@@ -343,14 +375,10 @@ def GeeknoteOpenNote(note, title=None, notebook=None):
         text = Editor.ENMLtoText(note.content)
         text = text + '\n'
         text = tools.stdoutEncode(text)
-
         f.write(text)
     f.close()
 
     vim.command('edit {}'.format(f.name))
-
-    if note is not None:
-        setActiveWindow(origWin)
 
     autocmd('BufWritePost', 
             f.name, 

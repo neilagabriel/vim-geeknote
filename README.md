@@ -30,16 +30,24 @@
 
 ## Usage
 
-Use `:Geeknote` to open the geeknote navigation window. This command will 
-split the current window vertically and display the navigation window on
-the left-side. Notebooks can be expanded to show the notes they contain.
-To expand a notebook, simply navigate to the name of the notebook and hit
-`<Enter>`. Hit `<Enter>` again to close the notebook. To open/view a note
-navigate to the note and hit `<Enter>`. The note will be displayed in the
-previous window if it is possible to do so or in a new vertical split. To
-save changes to the note, simply save the buffer (e.g. `:w`).
+Use `:Geeknote` to open the geeknote navigation window. This command will split
+the current window vertically and display the navigation window on the
+left-side. Notebooks can be expanded to show the notes they contain.  To expand
+a notebook, simply navigate to the name of the notebook and hit `<Enter>`. Hit
+`<Enter>` again to close the notebook. To open/view a note navigate to the note
+and hit `<Enter>`. The note will be displayed in the previous window if it is
+possible to do so or in a new vertical split. To save changes to the note,
+simply save the buffer (e.g. `:w`).
 
 Use `:GeeknoteCreateNotebook <name>` to create a new notebook.
+
+Use `:GeeknoteCreateNote <name>` to create a new note. The note will be created
+in the notebook currently selected in the navigation window. If a notebook is
+not selected, an error is displayed. A new buffer for the note will be
+displayed in the previous window if it is possible to do so or in a new
+vertical split. The note will not be created until the buffer is saved (e.g.
+`:w`). Once saved, the note will be created and the navigation window will
+update.
 
 ## Acknowledgments
 
