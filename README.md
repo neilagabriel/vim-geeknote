@@ -4,9 +4,7 @@
 
 ## Supported Features
 
-- Open notebook and note listing in a vertical split navigation pane.
-- Open notes for reading by selecting them in the navigation pane.
-- Notebook creation
+- Notebook and note viewing and creation.
 - Editing note content.
 
 ## Dependencies
@@ -57,7 +55,6 @@ update.
 
 ## Todo
 
-- Note creation
 - Note title modification
 - Note movement (notebook to notebook)
 - Tag support
