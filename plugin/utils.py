@@ -66,10 +66,6 @@ def vsplit(bufname, width):
     vim.command('setlocal bufhidden=hide')
     vim.command('setlocal cursorline')
 
-def modified():
-    isModified = vim.eval('&modified')
-    return isModified == '1'
-
 def hidden():
     isHidden = vim.eval('&hidden')
     return isHidden == '1'
@@ -108,21 +104,19 @@ def firstUsableWindow():
         wnum += 1
     return -1
 
-def isWindowUsable(num):
+def isWindowUsable(wnum):
     if winnr('$') == 1:
         return False
 
-    oldwin = winnr()
-    vim.command('exec {} . "wincmd p"'.format(num))
+    bnum    = vim.windows[wnum-1].buffer.number
+    buftype = getbufvar(bnum, 'buftype')
+    preview = getwinvar(wnum, 'previewwindow')
 
-    isSpecialWin = vim.current.buffer.options['buftype']
-    if isSpecialWin != '':
-        isSpecialWin = vim.current.window.options['previewwindow']
-    isModified = modified()
+    if buftype != '' or preview is True:
+        return False
 
-    vim.command('exec {} . "wincmd p"'.format(oldwin))
+    if hidden():
+        return True
 
-    if isSpecialWin: return False
-    if hidden():     return True
-
-    return (isModified is False) or (bufInWindows(winbufnr(num)) >= 2)
+    isModified = getbufvar(bnum, 'modified')
+    return (isModified is False) or (bufInWindows(winbufnr(wnum)) >= 2)
