@@ -13,7 +13,7 @@
 
 ## Known Issues
 
-- Depending on formatting, note content is sometimes lost when saving notes. The data may be retrieved by reading the temp file that was created for the note (most often under /temp).
+- Depending on formatting, note content is sometimes lost when saving notes. The data may be retrieved by reading the temp file that was created for the note (most often under /temp). This is actually an issue with Geeknote itself. Investigating.
   
 ## Installation
 
