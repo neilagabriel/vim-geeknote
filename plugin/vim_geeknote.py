@@ -44,27 +44,29 @@ class Explorer(object):
         self.refresh()
 
     def addNotebook(self, notebook):
-        notes = GeeknoteGetNotes(notebook)
-        notes = sorted(notes, key=lambda n: n.title)
-        node  = {
-                    'notebook':notebook, 
-                    'notes':notes, 
-                    'row':-1
-                }
+        node = {'notebook':notebook, 'notes':[], 'row':-1}
         self.nodes.append(node)
         self.nodes = sorted(self.nodes, 
                             key=lambda k: k['notebook'].name.lower())
 
+        notes = GeeknoteGetNotes(notebook)
+        for note in sorted(notes, key=lambda n: n.title):
+            self.addNote(note, notebook)
+
         if notebook.guid not in self.expandState:
             self.expandState[notebook.guid] = False
 
-        for note in notes:
-            self.noteMap[note.guid] = (
-                {
-                    'notebook':notebook, 
-                    'note':note, 
-                    'row':-1
-                })
+    def addNote(self, note, notebook):
+        self.noteMap[note.guid] = (
+            {
+                'notebook':notebook, 
+                'note':note, 
+                'row':-1
+            })
+
+        for node in self.nodes:
+            if node['notebook'].guid == notebook.guid:
+                node['notes'].append(note)
 
     def closeAll(self):
         for node in self.nodes:
@@ -292,25 +294,16 @@ def GeeknoteCreateNote(name):
 def GeeknoteCreateNotebook(name):
     name = name.strip('"\'')
     try:
-        result = Notebooks().create(name)
-        if result is False:
-            vim.command('echoerr "Failed to create notebook."')
+        notebook = Notebooks().create(name)
+        if explorer is None:
             return
+        explorer.addNotebook(notebook)
     except:
         vim.command('echoerr "Failed to create notebook."')
-
-    if explorer is None:
         return
 
-    notebooks = GeekNote().findNotebooks()
-    for notebook in notebooks:
-        if notebook.name == name:
-            explorer.addNotebook(notebook)
-            explorer.render()
-            explorer.selectNotebook(notebook)
-            return
-
-    vim.command('echoerr "Unexpected error, could not find notebook."')
+    explorer.render()
+    explorer.selectNotebook(notebook)
 
 def GeeknoteGetNotes(notebook):
     notes = []
@@ -340,28 +333,17 @@ def GeeknoteSaveNote(filename):
 
     # Saving a new note.
     else:
-        result = bool(User().getEvernote().createNote(**inputData))
-        if result is True:
-            explorer.refresh()
+        try:
+            note = User().getEvernote().createNote(**inputData)
+
+            explorer.addNote(note, notebook)
             explorer.expandNotebook(notebook.guid)
             explorer.render()
-
-            #
-            # Find the newly created node and select it in navigation window.
-            # Since note titles do not need to be unique, rely on the fact that
-            # Geeknote will return the notes in order of their creation date
-            # (oldest to newest).
-            #
-            notes = GeeknoteGetNotes(notebook)
-            for n in notes:
-                if n.title == title:
-                    note = n
             explorer.selectNote(note)
+        except:
+            vim.command('echoerr "Failed to save note"')
 
-    if result is False:
-        vim.command('echoerr "Failed to save note"')
-
-    return result
+    return note
 
 # Open an existing or new note in the active window.
 def GeeknoteOpenNote(note, title=None, notebook=None):
