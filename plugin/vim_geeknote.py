@@ -345,6 +345,11 @@ def GeeknoteSaveNote(filename):
 
     return note
 
+def GeeknoteSync():
+    if explorer is not None:
+        explorer.refresh()    
+        explorer.render()
+
 # Open an existing or new note in the active window.
 def GeeknoteOpenNote(note, title=None, notebook=None):
     if note is not None:

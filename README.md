@@ -51,6 +51,9 @@ vertical split. The note will not be created until the buffer is saved (e.g.
 `:w`). Once saved, the note will be created and the navigation window will
 update.
 
+Use `:GeeknoteSync` to update the navigation with the latest data on the Evernote
+server.
+
 ## Acknowledgments
 
 - [Geeknote](http://www.geeknote.me)

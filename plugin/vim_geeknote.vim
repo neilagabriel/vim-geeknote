@@ -42,8 +42,16 @@ GeeknoteSaveNote(filename)
 endOfPython
 endfunction
 
+function! Vim_GeeknoteSync()
+python << endOfPython
+from vim_geeknote import GeeknoteSync
+GeeknoteSync()
+endOfPython
+endfunction
+
 " ---------------------- User Commands ----------------------------------------
 
 command!          Geeknote               call Vim_GeeknoteToggle()
 command! -nargs=1 GeeknoteCreateNotebook call Vim_GeeknoteCreateNotebook(<f-args>)
 command! -nargs=1 GeeknoteCreateNote     call Vim_GeeknoteCreateNote(<f-args>)
+command!          GeeknoteSync           call Vim_GeeknoteSync()
