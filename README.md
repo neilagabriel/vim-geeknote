@@ -67,7 +67,6 @@ server.
 - Tag support
 - Toggle close
 - Temp-file cleanup
-- Evernote (re)sync
 - Prettier navigation window
 - Improved notebook creation process
 - Vim help
