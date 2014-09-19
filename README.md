@@ -64,6 +64,7 @@ server.
 
 - Note title modification
 - Note movement (notebook to notebook)
+- Note/Notebook renaming and note movement from navigation window.
 - Tag support
 - Toggle close
 - Temp-file cleanup
