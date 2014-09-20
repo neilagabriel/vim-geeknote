@@ -49,13 +49,13 @@ class Explorer(object):
     def addNotebook(self, notebook):
         node = NotebookNode(notebook)
         self.notebooks.append(node)
-        self.notebooks = sorted(
-            self.notebooks, key=lambda n: n.notebook.name.lower())
+        self.notebooks.sort(key=lambda n: n.notebook.name.lower())
 
         self.guidMap[notebook.guid] = node
 
         notes = GeeknoteGetNotes(notebook)
-        for note in sorted(notes, key=lambda n: n.title):
+        notes.sort(key=lambda n: n.title)
+        for note in notes:
             self.addNote(note, notebook)
 
         if notebook.guid not in self.expandState:
@@ -182,7 +182,7 @@ class Explorer(object):
             line += ' {}'.format(notebook.name)
             if numNotes > 0:
                 line += ' ({})'.format(str(numNotes))
-            content.append('{:<44} [{}]'.format(line, notebook.guid))
+            content.append('{:<45} [{}]'.format(line, notebook.guid))
             node.row = row
             row += 1
 
@@ -191,7 +191,7 @@ class Explorer(object):
                     note = noteNode.note
                     name = note.title
                     name = (name[:38] + '..') if len(name) > 40 else name
-                    line = '    {:<40} [{}]'.format(name, note.guid)
+                    line = '    {:<41} [{}]'.format(name, note.guid)
                     content.append(line)
                     noteNode.row = row
                     row += 1
