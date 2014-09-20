@@ -18,25 +18,28 @@ openNotes = {}
 
 #======================== Classes ============================================#
 
+class Node(object):
+    guid = None
+    row  = -1
+
+class NotebookNode(Node):
+    def __init__(self, notebook):
+        self.notebook = notebook
+        self.notes    = []
+
+class NoteNode(Node):
+    def __init__(self, note, notebook):
+        self.note     = note
+        self.notebook = notebook
+
 class Explorer(object):
-    #
-    # A list of nodes that comprise the explorer. Each node represents a
-    # notebook. This list is recreated each time the explorer is refreshed.
-    #
-    nodes = []
+    # A list of nodes for each notebook display in the explorer.
+    notebooks = []
 
-    #
-    # A dictionary that maps notes to the notebooks they are contained in as
-    # well as other data related to navigation. This dictionary is recreated
-    # each time the explorer is refreshed.
-    #
-    noteMap = {}
+    # Maps the guid of each node to its underlying node object (includes notes)
+    guidMap = {}
 
-    #
-    # A dictionary that maps notebooks to their expand state (expanded or not
-    # expanded). This dictionary is not recreated when the explorer is
-    # refreshed.
-    #
+    # Maps notebook guids to the notebook's expand state (expanded/!explanded)
     expandState = {}
 
     def __init__(self, buf):
@@ -44,10 +47,12 @@ class Explorer(object):
         self.refresh()
 
     def addNotebook(self, notebook):
-        node = {'notebook':notebook, 'notes':[], 'row':-1}
-        self.nodes.append(node)
-        self.nodes = sorted(self.nodes, 
-                            key=lambda k: k['notebook'].name.lower())
+        node = NotebookNode(notebook)
+        self.notebooks.append(node)
+        self.notebooks = sorted(
+            self.notebooks, key=lambda n: n.notebook.name.lower())
+
+        self.guidMap[notebook.guid] = node
 
         notes = GeeknoteGetNotes(notebook)
         for note in sorted(notes, key=lambda n: n.title):
@@ -57,25 +62,19 @@ class Explorer(object):
             self.expandState[notebook.guid] = False
 
     def addNote(self, note, notebook):
-        self.noteMap[note.guid] = (
-            {
-                'notebook':notebook, 
-                'note':note, 
-                'row':-1
-            })
+        node = NoteNode(note, notebook)
+        notebookNode = self.guidMap[notebook.guid]
+        notebookNode.notes.append(node)
 
-        for node in self.nodes:
-            if node['notebook'].guid == notebook.guid:
-                node['notes'].append(note)
+        self.guidMap[note.guid] = node
 
     def closeAll(self):
-        for node in self.nodes:
-            notebook = node['notebook']
-            self.expandState[notebook.guid] = False
+        for guid in self.expandState:
+            self.expandState[guid] = False
 
     def expandAll(self):
-        for node in self.nodes:
-            self.expandNotebook(node['notebook'].guid)
+        for guid in self.expandState:
+            self.expandNotebook(guid)
 
     def expandNotebook(self, guid):
         self.expandState[guid] = True
@@ -84,109 +83,89 @@ class Explorer(object):
         return self.buf
 
     def getNotebook(self, guid):
-        for node in self.nodes:
-            notebook = node['notebook']
-            if notebook.guid == guid:
-                return notebook
+        node = self.guidMap[guid]
+        if isinstance(node, NotebookNode):
+            return node.notebook
         return None
 
     def getNote(self, guid):
-        return self.noteMap[guid]['note']
+        node = self.guidMap[guid]
+        if isinstance(node, NoteNode):
+            return node.note
+        return None
 
     def getContainingNotebook(self, guid):
-        return self.noteMap[guid]['notebook']
+        node = self.guidMap[guid]
+        if isinstance(node, NoteNode):
+            return node.notebook
+        return None
 
     def getSelectedNotebook(self):
-        # Get the text selected in the navigation window.
         prevWin = getActiveWindow()
         setActiveBuffer(self.buf)
         text = vim.current.line
         setActiveWindow(prevWin)
 
-        nodeObj = self.getNodeBase(text)
-        if isinstance(nodeObj, Types.Notebook):
-            return nodeObj
-        if isinstance(nodeObj, Types.Note):
-            return self.getContainingNotebook(nodeObj.guid)
+        guid = self.getNodeGuid(text)
+        if guid is not None:
+            node = self.guidMap[guid]
+            if isinstance(node, NotebookNode):
+                return node.notebook
+            if isinstance(node, NoteNode):
+                return node.notebook
         return None
 
-    def getNodeBase(self, nodeText):
-        # Check for notes first
+    def getNodeGuid(self, nodeText):
         r = re.compile('^\s+.+\[(.+)\]$')
         m = r.match(nodeText)
-        if m:
-            guid = m.group(1)
-            return self.getNote(guid)
+        if m: return m.group(1)
 
-        # Check if its a notebook
         r = re.compile('^[\+-].+\[(.+)\]$')
         m = r.match(nodeText)
-        if m:
-            guid = m.group(1)
-            return self.getNotebook(guid)
+        if m: return m.group(1)
 
-        # Otherwise the user has not selected anything of importance.
         return None
 
     def refresh(self):
-        del self.nodes[:]
-        self.noteMap.clear()
+        del self.notebooks[:]
+        self.guidMap.clear()
 
         notebooks = GeekNote().findNotebooks()
         for notebook in notebooks:
             self.addNotebook(notebook)
 
-    def selectNotebook(self, notebook):
+    def selectNode(self, guid):
         origWin = getActiveWindow()
         setActiveBuffer(self.buf)
-
-        # Notebook index 
-        if isinstance(notebook, numbers.Number):
-            if notebook < len(self.nodes):
-                node = self.nodes[notebook]
-                vim.current.window.cursor = (node['row'], 0)
-
-        # Notebook instance
-        else:
-            for node in self.nodes:
-                if node['notebook'].guid == notebook.guid:
-                    vim.current.window.cursor = (node['row'], 0)
-                    break
-
+        node = self.guidMap[guid]
+        if node is not None:
+            vim.current.window.cursor = (node.row, 0)
         setActiveWindow(origWin)
+
+    def selectNotebook(self, notebook):
+        self.selectNode(notebook.guid)
+
+    def selectNotebookIndex(self, index):
+        if index < len(self.notebooks):
+            node = self.notebooks[index]
+            self.selectNode(node.notebook.guid)
 
     def selectNote(self, note):
-        origWin = getActiveWindow()
-        setActiveBuffer(self.buf)
-
-        row = self.noteMap[note.guid]['row']
-        if row >= 0:
-            vim.current.window.cursor = (row, 0)
-
-        setActiveWindow(origWin)
+        self.selectNode(note.guid)
 
     def toggleNotebook(self, guid):
-        target = None
-
-        for node in self.nodes:
-            notebook = node['notebook']
-            if notebook.guid == guid:
-                target = node
-                break
-
-        if target:
+        node = self.guidMap[guid]
+        if isinstance(node, NotebookNode):
             self.expandState[guid] = not self.expandState[guid]
 
     # Render the navigation buffer in the navigation window..
     def render(self):
         origWin = getActiveWindow()
-
-        # Move to the window displaying the navigation buffer.
         setActiveBuffer(self.buf)
 
         # Clear the navigation buffer to get rid of old content (if any).
         self.buf.options['modifiable'] = True
-        clearBuffer(self.buf)
+        del self.buf[:]
 
         # Prepare the new content and append it to the navigation buffer.
         content = []
@@ -194,34 +173,32 @@ class Explorer(object):
         content.append('{:=^50}'.format('='))
 
         row = 3
-        for node in self.nodes:
-            notebook = node['notebook']
-            notes    = node['notes']
-            total    = len(notes)
+        for node in self.notebooks:
+            notebook = node.notebook
+            numNotes = len(node.notes)
             expand   = self.expandState[notebook.guid]
 
-            line  = '-' if expand is True or total == 0 else '+'
+            line  = '-' if expand is True or numNotes == 0 else '+'
             line += ' {}'.format(notebook.name)
-            if total > 0:
-                line += ' ({})'.format(str(total))
+            if numNotes > 0:
+                line += ' ({})'.format(str(numNotes))
             content.append('{:<44} [{}]'.format(line, notebook.guid))
-            node['row'] = row
+            node.row = row
             row += 1
 
             if expand is True:
-                for note in notes:
+                for noteNode in node.notes:
+                    note = noteNode.note
                     name = note.title
                     name = (name[:38] + '..') if len(name) > 40 else name
                     line = '    {:<40} [{}]'.format(name, note.guid)
                     content.append(line)
-                    self.noteMap[note.guid]['row'] = row
+                    noteNode.row = row
                     row += 1
         self.buf.append(content, 0)
 
         # Do not all the user to modify the navigation buffer (for now).
         self.buf.options['modifiable'] = False
-
-        # Return to the previously active window.
         setActiveWindow(origWin)
 
 #======================== Geeknote Functions  ================================#
@@ -278,7 +255,7 @@ def GeeknoteCreateNote(name):
 
     notebook = explorer.getSelectedNotebook()
     if notebook is None:
-        explorer.selectNotebook(0)
+        explorer.selectNotebookIndex(0)
         vim.command('echoerr "Please select a notebook first."')
         return
 
@@ -391,5 +368,5 @@ def GeeknoteToggle():
         explorer = Explorer(buf)
 
     explorer.render()
-    explorer.selectNotebook(0)
+    explorer.selectNotebookIndex(0)
 

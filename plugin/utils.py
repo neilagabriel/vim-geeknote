@@ -46,9 +46,6 @@ def setActiveBuffer(buf):
         wnum = windows[0]
         vim.command('exec {} . "wincmd w"'.format(wnum))
 
-def clearBuffer(buf):
-    vim.command('normal! ggdG')
-
 def vsplit(bufname, width):
     vim.command('topleft vertical ' + str(width) + ' new')
     vim.command('setlocal winfixwidth')
