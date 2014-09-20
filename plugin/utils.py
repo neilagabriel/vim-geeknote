@@ -46,23 +46,6 @@ def setActiveBuffer(buf):
         wnum = windows[0]
         vim.command('exec {} . "wincmd w"'.format(wnum))
 
-def vsplit(bufname, width):
-    vim.command('topleft vertical ' + str(width) + ' new')
-    vim.command('setlocal winfixwidth')
-    vim.command('edit {}'.format(bufname))
-
-    # Window options 
-    vim.current.window.options['wrap'] = False
-
-    # Buffer options
-    vim.command('setfiletype geeknote')
-
-    vim.command('normal! ggdG')
-    vim.command('setlocal noswapfile')
-    vim.command('setlocal buftype=nofile')
-    vim.command('setlocal bufhidden=hide')
-    vim.command('setlocal cursorline')
-
 def hidden():
     isHidden = vim.eval('&hidden')
     return isHidden == '1'
@@ -79,19 +62,25 @@ def bufInWindows(bnum):
          winnum = winnum + 1
      return cnt
 
-def getbufvar(bnum, var):
+def getBufferVariable(bnum, var):
     return vim.buffers[bnum].options[var]
  
-def getwinvar(wnum, var):
+def getWindowVariable(wnum, var):
     return vim.windows[wnum-1].options[var]
 
-def firstUsableWindow():
+def setBufferVariable(bnum, var, value):
+    vim.buffers[bnum].options[var] = value
+ 
+def setWindowVariable(wnum, var, value):
+    vim.windows[wnum-1].options[var] = value
+
+def getFirstUsableWindow():
     wnum = 1
     while wnum <= winnr('$'):
         bnum         = winbufnr(wnum)
-        buftype      = getbufvar(bnum, 'buftype')
-        isPreviewWin = getwinvar(wnum, 'previewwindow')
-        isModified   = getbufvar(bnum, 'modified')
+        buftype      = getBufferVariable(bnum, 'buftype')
+        isModified   = getBufferVariable(bnum, 'modified')
+        isPreviewWin = getWindowVariable(wnum, 'previewwindow')
 
         if ((bnum != -1)            and 
             (buftype == '')         and
@@ -101,13 +90,16 @@ def firstUsableWindow():
         wnum += 1
     return -1
 
+def isBufferModified(bnum):
+    return getBufferVariable(bnum, 'modified')
+
 def isWindowUsable(wnum):
     if winnr('$') == 1:
         return False
 
     bnum    = vim.windows[wnum-1].buffer.number
-    buftype = getbufvar(bnum, 'buftype')
-    preview = getwinvar(wnum, 'previewwindow')
+    buftype = getBufferVariable(bnum, 'buftype')
+    preview = getWindowVariable(wnum, 'previewwindow')
 
     if buftype != '' or preview is True:
         return False
@@ -115,5 +107,5 @@ def isWindowUsable(wnum):
     if hidden():
         return True
 
-    isModified = getbufvar(bnum, 'modified')
+    isModified = getBufferVariable(bnum, 'modified')
     return (isModified is False) or (bufInWindows(winbufnr(wnum)) >= 2)

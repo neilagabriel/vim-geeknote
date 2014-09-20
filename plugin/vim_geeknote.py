@@ -26,11 +26,19 @@ class NotebookNode(Node):
     def __init__(self, notebook):
         self.notebook = notebook
         self.notes    = []
+        self.setName(notebook.name)
+
+    def setName(self, name):
+        self.name = name
 
 class NoteNode(Node):
     def __init__(self, note, notebook):
         self.note     = note
         self.notebook = notebook
+        self.setTitle(note.title)
+
+    def setTitle(self, title):
+        self.title = title
 
 class Explorer(object):
     # A list of nodes for each notebook display in the explorer.
@@ -42,9 +50,70 @@ class Explorer(object):
     # Maps notebook guids to the notebook's expand state (expanded/!explanded)
     expandState = {}
 
-    def __init__(self, buf):
-        self.buf = buf
-        self.refresh()
+    #
+    # A list of nodes (notebooks or nodes) that have been modified since the
+    # last time the navigation window was synchronized with the server.
+    #
+    modifiedNodes = []
+
+    # The file used to back the data store in the navigation window.
+    dataFile = None
+
+    def __init__(self, dataFile, buf):
+        self.dataFile = dataFile
+        self.buf      = buf
+
+        try:
+            self.refresh()
+        except:
+            vim.command('echoerr "Failed to retrieve data from server"')
+            raise
+
+        self.initView()
+        self.render()
+
+        autocmd('BufWritePre', self.dataFile.name, ':call Vim_GeeknoteSync()')
+
+    def __del__(self):
+        try:
+            self.dataFile.close()
+        except:
+            pass
+
+    def applyChanges(self):
+        if isBufferModified(self.buf.number) is False:
+            return
+
+        for line in self.buf:
+            # Look for changes to notes.
+            r = re.compile('^\s+(.+)\[(.+)\]$')
+            m = r.match(line)
+            if m: 
+                title = m.group(1).strip()
+                guid  = m.group(2)
+                node  = self.guidMap[guid]
+                if not isinstance(node, NoteNode):
+                    vim.command(
+                        'echoerr "Cannot transform note {} to notebook"'.format(title))
+                elif title != node.title:
+                    node.setTitle(title)
+                    self.modifiedNodes.append(node)
+                continue
+
+            # Look for changes to notebooks.
+            r = re.compile('^[\+-](.+)\[(.+)\]$')
+            m = r.match(line)
+            if m:
+                name = m.group(1).strip()
+                guid = m.group(2)
+                node = self.guidMap[guid]
+                if not isinstance(node, NotebookNode):
+                    vim.command(
+                        'echoerr "Cannot transform notebook {} to note"'.format(name))
+                elif name != node.name:
+                    node.setName(name)
+                    self.modifiedNodes.append(node)
+                continue
 
     def addNotebook(self, notebook):
         node = NotebookNode(notebook)
@@ -126,6 +195,23 @@ class Explorer(object):
 
         return None
 
+    def initView(self):
+        origWin = getActiveWindow()
+        setActiveBuffer(self.buf)
+
+        wnum = getActiveWindow()
+        bnum = self.buf.number
+
+        setWindowVariable(wnum, 'winfixwidth', True)
+        setWindowVariable(wnum, 'wrap'       , False)
+        setWindowVariable(wnum, 'cursorline' , True)
+        setBufferVariable(bnum, 'swapfile'   , False)
+        setBufferVariable(bnum, 'buftype'    , 'quickfix')
+        setBufferVariable(bnum, 'bufhidden'  , 'hide')
+
+        vim.command('setfiletype geeknote')
+        setActiveWindow(origWin)
+
     def refresh(self):
         del self.notebooks[:]
         self.guidMap.clear()
@@ -163,14 +249,20 @@ class Explorer(object):
         origWin = getActiveWindow()
         setActiveBuffer(self.buf)
 
+        # 
+        # Before overwriting the naviagation window, look for any changes made
+        # by the user. Do not synchronize them yet with the server, just make
+        # sure they are not lost.
+        #
+        self.applyChanges()
+
         # Clear the navigation buffer to get rid of old content (if any).
-        self.buf.options['modifiable'] = True
         del self.buf[:]
 
         # Prepare the new content and append it to the navigation buffer.
         content = []
         content.append('Notebooks:')
-        content.append('{:=^50}'.format('='))
+        content.append('{:=^84}'.format('='))
 
         row = 3
         for node in self.notebooks:
@@ -179,27 +271,45 @@ class Explorer(object):
             expand   = self.expandState[notebook.guid]
 
             line  = '-' if expand is True or numNotes == 0 else '+'
-            line += ' {}'.format(notebook.name)
-            if numNotes > 0:
-                line += ' ({})'.format(str(numNotes))
+            line += ' ' + node.name
             content.append('{:<45} [{}]'.format(line, notebook.guid))
             node.row = row
             row += 1
 
             if expand is True:
                 for noteNode in node.notes:
-                    note = noteNode.note
-                    name = note.title
-                    name = (name[:38] + '..') if len(name) > 40 else name
-                    line = '    {:<41} [{}]'.format(name, note.guid)
+                    note  = noteNode.note
+                    title = noteNode.title
+
+                    line  = '    {:<41} [{}]'.format(title, note.guid)
                     content.append(line)
                     noteNode.row = row
                     row += 1
         self.buf.append(content, 0)
 
-        # Do not all the user to modify the navigation buffer (for now).
-        self.buf.options['modifiable'] = False
+        #
+        # Write the navigation window but disable BufWritePre events before
+        # doing so. We only want to check for user changes when the user was
+        # the one that saved the buffer.
+        #
+        ei = vim.eval('&ei')
+        vim.command('set ei=BufWritePre')
+        vim.command("write!")
+        vim.command('set ei={}'.format(ei))
+
         setActiveWindow(origWin)
+
+    def syncChanges(self):
+        self.applyChanges()
+        for node in self.modifiedNodes:
+             if isinstance(node, NotebookNode):
+                 GeeknoteRenameNotebook(node.notebook, node.name)
+                 continue
+             if isinstance(node, NoteNode):
+                 GeeknoteRenameNote(node.note, node.title)
+                 continue
+        del self.modifiedNodes[:]
+
 
 #======================== Geeknote Functions  ================================#
 
@@ -219,8 +329,8 @@ def GeeknoteActivateNode():
 
         origWin        = getActiveWindow()
         prevWin        = getPreviousWindow()
+        firstUsableWin = getFirstUsableWindow()
         isPrevUsable   = isWindowUsable(prevWin)
-        firstUsableWin = firstUsableWindow()
      
         setActiveWindow(prevWin)
         if (isPrevUsable is False) and (firstUsableWin == -1):
@@ -290,6 +400,26 @@ def GeeknoteGetNotes(notebook):
         notes.append(note)
     return notes
 
+def GeeknoteRenameNotebook(notebook, name):
+    notebook.name = name
+    try:
+        noteStore = Notes().getEvernote().getNoteStore()
+        authToken = Notes().getEvernote().authToken
+        return noteStore.updateNotebook(authToken, notebook)
+    except:
+        vim.command('echoerr "Failed to rename notebook."')
+    return None
+
+def GeeknoteRenameNote(note, title):
+    note.title = title
+    try:
+        noteStore = Notes().getEvernote().getNoteStore()
+        authToken = Notes().getEvernote().authToken
+        return noteStore.updateNote(authToken, note)
+    except:
+        vim.command('echoerr "Failed to rename note."')
+    return None
+
 def GeeknoteSaveNote(filename):
     result   = False
     note     = openNotes[filename]['note']
@@ -324,6 +454,7 @@ def GeeknoteSaveNote(filename):
 
 def GeeknoteSync():
     if explorer is not None:
+        explorer.syncChanges()
         explorer.refresh()    
         explorer.render()
 
@@ -337,7 +468,6 @@ def GeeknoteOpenNote(note, title=None, notebook=None):
 
     if note is not None:
         text = Editor.ENMLtoText(note.content)
-        text = text + '\n'
         text = tools.stdoutEncode(text)
         f.write(text)
     f.close()
@@ -359,14 +489,15 @@ def GeeknoteToggle():
     global explorer
 
     if explorer is None:
-        vsplit('t:explorer', 50)
-        buf = vim.current.buffer
+        dataFile = tempfile.NamedTemporaryFile(delete=True)
+        vim.command('topleft 50 vsplit {}'.format(dataFile.name))
 
         noremap("<silent> <buffer> <cr>", 
                 ":call Vim_GeeknoteActivateNode()<cr>")
 
-        explorer = Explorer(buf)
+        explorer = Explorer(dataFile, vim.current.buffer)
+    else:
+        explorer.render()
 
-    explorer.render()
     explorer.selectNotebookIndex(0)
 
