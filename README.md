@@ -15,7 +15,7 @@
 
 - Depending on formatting, note content is sometimes lost when saving notes. The data may be retrieved by reading the temp file that was created for the note (most often under /temp). This is actually an issue with Geeknote itself. See [Geeknote#223](https://github.com/VitaliyRodnenko/geeknote/issues/223).
 
-- Infrequently, errors are encountered while connecting with the Evernote server to download the user data. See [Geeknote#224](https://github.com/VitaliyRodnenko/geeknote/issues/224). To know if you're hitting this issue, exit vim and run geeknote standalone and see if it is able to list your notes (i.e. `git list`).
+- Infrequently, errors are encountered while connecting with the Evernote server to download the user data. See [Geeknote#224](https://github.com/VitaliyRodnenko/geeknote/issues/224). To know if you're hitting this issue, exit vim and run geeknote standalone and see if it is able to list your notes (i.e. `geeknote list`).
   
 ## Installation
 
