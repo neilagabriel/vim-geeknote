@@ -262,7 +262,7 @@ class Explorer(object):
         # Prepare the new content and append it to the navigation buffer.
         content = []
         content.append('Notebooks:')
-        content.append('{:=^84}'.format('='))
+        content.append('{:=^90}'.format('='))
 
         row = 3
         for node in self.notebooks:
@@ -272,7 +272,7 @@ class Explorer(object):
 
             line  = '-' if expand is True or numNotes == 0 else '+'
             line += ' ' + node.name
-            content.append('{:<45} [{}]'.format(line, notebook.guid))
+            content.append('{:<50} [{}]'.format(line, notebook.guid))
             node.row = row
             row += 1
 
@@ -281,7 +281,7 @@ class Explorer(object):
                     note  = noteNode.note
                     title = noteNode.title
 
-                    line  = '    {:<41} [{}]'.format(title, note.guid)
+                    line  = '    {:<46} [{}]'.format(title, note.guid)
                     content.append(line)
                     noteNode.row = row
                     row += 1
