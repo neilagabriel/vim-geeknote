@@ -54,6 +54,10 @@ update.
 Use `:GeeknoteSync` to update the navigation with the latest data on the Evernote
 server.
 
+To rename notebooks or notes, simply modify the the name of the notebook/note
+in the navigation window and save the bugger (e.g. `:w`). Any number of changes
+can be made before saving, but be sure not to modify an item's GUID.
+
 ## Acknowledgments
 
 - [Geeknote](http://www.geeknote.me)
@@ -62,11 +66,9 @@ server.
 
 ## Todo
 
-- Note title modification
-- Note movement (notebook to notebook)
-- Note/Notebook renaming and note movement from navigation window.
-- Tag support
 - Toggle close
+- Move notes to different notebooks from within the navigation window.
+- Tag support
 - Temp-file cleanup
 - Prettier navigation window
 - Improved notebook creation process
