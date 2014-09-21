@@ -9,7 +9,7 @@
 
 ## Screenshots
 
-![img](https://github.com/neilagabriel/vim-geeknote/img/explorer.png)
+![img](https://github.com/neilagabriel/vim-geeknote/blob/master/img/explorer.png)
 
 ## Dependencies
 
