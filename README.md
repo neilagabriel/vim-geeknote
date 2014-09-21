@@ -7,6 +7,10 @@
 - Notebook and note viewing, renaming, and creation.
 - Editing note content.
 
+## Screenshots
+
+![img](https://github.com/neilagabriel/vim-geeknote/img/explorer.png)
+
 ## Dependencies
 
 - Vim 7.4.364 or newer (issues observed with earlier versions)
