@@ -41,7 +41,8 @@ class NoteNode(Node):
         self.title = title
 
 class Explorer(object):
-    # A list of nodes for each notebook display in the explorer.
+
+    # A list of nodes for each notebook displayed in the explorer.
     notebooks = []
 
     # Maps the guid of each node to its underlying node object (includes notes)
@@ -84,7 +85,9 @@ class Explorer(object):
         if isBufferModified(self.buf.number) is False:
             return
 
-        for line in self.buf:
+        for row in xrange(len(self.buf)):
+            line = self.buf[row]
+
             # Look for changes to notes.
             r = re.compile('^\s+(.+)\[(.+)\]$')
             m = r.match(line)
@@ -92,12 +95,20 @@ class Explorer(object):
                 title = m.group(1).strip()
                 guid  = m.group(2)
                 node  = self.guidMap[guid]
-                if not isinstance(node, NoteNode):
-                    vim.command(
-                        'echoerr "Cannot transform note {} to notebook"'.format(title))
-                elif title != node.title:
-                    node.setTitle(title)
-                    self.modifiedNodes.append(node)
+                if isinstance(node, NoteNode):
+                    # Did the user change the note's title?
+                    if title != node.title:
+                        node.setTitle(title)
+                        if node not in self.modifiedNodes:
+                            self.modifiedNodes.append(node)
+
+                    # Did the user move the note into a different notebook?
+                    navNotebook = self.findNotebookForNode(row)
+                    if navNotebook is not None:
+                        if navNotebook.guid != node.notebook.guid:
+                            node.notebook = navNotebook
+                            if node not in self.modifiedNodes:
+                                self.modifiedNodes.append(node)
                 continue
 
             # Look for changes to notebooks.
@@ -107,12 +118,10 @@ class Explorer(object):
                 name = m.group(1).strip()
                 guid = m.group(2)
                 node = self.guidMap[guid]
-                if not isinstance(node, NotebookNode):
-                    vim.command(
-                        'echoerr "Cannot transform notebook {} to note"'.format(name))
-                elif name != node.name:
-                    node.setName(name)
-                    self.modifiedNodes.append(node)
+                if isinstance(node, NotebookNode):
+                    if name != node.name:
+                        node.setName(name)
+                        self.modifiedNodes.append(node)
                 continue
 
     def addNotebook(self, notebook):
@@ -147,6 +156,20 @@ class Explorer(object):
 
     def expandNotebook(self, guid):
         self.expandState[guid] = True
+
+    #
+    # Search upwards, starting at the given row number and return the first
+    # note node found. 
+    #
+    def findNotebookForNode(self, nodeRow):
+        while nodeRow > 0:
+            guid = self.getNodeGuid(self.buf[nodeRow])
+            if guid is not None: 
+                node = self.guidMap[guid]
+                if isinstance(node, NotebookNode):
+                    return node.notebook
+            nodeRow -= 1
+        return None
 
     def getBuffer(self):
         return self.buf
@@ -185,14 +208,10 @@ class Explorer(object):
         return None
 
     def getNodeGuid(self, nodeText):
-        r = re.compile('^\s+.+\[(.+)\]$')
+        r = re.compile('^.+\[(.+)\]$')
         m = r.match(nodeText)
-        if m: return m.group(1)
-
-        r = re.compile('^[\+-].+\[(.+)\]$')
-        m = r.match(nodeText)
-        if m: return m.group(1)
-
+        if m: 
+            return m.group(1)
         return None
 
     def initView(self):
@@ -306,7 +325,10 @@ class Explorer(object):
                  GeeknoteRenameNotebook(node.notebook, node.name)
                  continue
              if isinstance(node, NoteNode):
-                 GeeknoteRenameNote(node.note, node.title)
+                 if node.title != node.note.title:
+                     GeeknoteRenameNote(node.note, node.title)
+                 if node.notebook.guid != node.note.notebookGuid:
+                     GeeknoteMoveNote(node.note, node.notebook)
                  continue
         del self.modifiedNodes[:]
 
@@ -399,6 +421,16 @@ def GeeknoteGetNotes(notebook):
     for key, note in enumerate(results.notes):
         notes.append(note)
     return notes
+
+def GeeknoteMoveNote(note, notebook):
+    note.notebookGuid = notebook.guid
+    try:
+        noteStore = Notes().getEvernote().getNoteStore()
+        authToken = Notes().getEvernote().authToken
+        return noteStore.updateNote(authToken, note)
+    except:
+        vim.command('echoerr "Failed to move note."')
+    return None
 
 def GeeknoteRenameNotebook(notebook, name):
     notebook.name = name

@@ -57,12 +57,17 @@ vertical split. The note will not be created until the buffer is saved (e.g.
 `:w`). Once saved, the note will be created and the navigation window will
 update.
 
-Use `:GeeknoteSync` to update the navigation with the latest data on the Evernote
-server.
+Use `:GeeknoteSync` to update the navigation with the latest data on the
+Evernote server.
 
 To rename notebooks or notes, simply modify the the name of the notebook/note
 in the navigation window and save the bugger (e.g. `:w`). Any number of changes
 can be made before saving, but be sure not to modify an item's GUID.
+
+To move a note into a different notebook, simply move the note's text (includes
+title and GUID) under the desired notebook in the navigation window and save
+the buffer. Similar to renaming, any number notes can be moved before saving
+the buffer.
 
 ## Acknowledgments
 
@@ -73,7 +78,6 @@ can be made before saving, but be sure not to modify an item's GUID.
 ## Todo
 
 - Toggle close
-- Move notes to different notebooks from within the navigation window.
 - Tag support
 - Temp-file cleanup
 - Prettier navigation window
