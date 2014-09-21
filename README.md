@@ -4,7 +4,7 @@
 
 ## Supported Features
 
-- Notebook and note viewing and creation.
+- Notebook and note viewing, renaming, and creation.
 - Editing note content.
 
 ## Dependencies
