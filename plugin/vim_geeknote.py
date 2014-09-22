@@ -347,7 +347,7 @@ def GeeknoteActivateNode():
     m = r.match(current_line)
     if m:
         guid = m.group(1)
-        note = GeekNote().getNote(guid)
+        note = GeeknoteGetNote(guid)
 
         origWin        = getActiveWindow()
         prevWin        = getPreviousWindow()
@@ -414,11 +414,28 @@ def GeeknoteCreateNotebook(name):
     explorer.render()
     explorer.selectNotebook(notebook)
 
+def GeeknoteGetNote(guid):
+    geeknote = GeekNote()
+    return geeknote.getNoteStore().getNote(
+               geeknote.authToken, guid, True, False, False, False)
+
 def GeeknoteGetNotes(notebook):
+    request = 'notebook:"%s" ' % notebook.name
+    count   = 20
+
+    notes  = Notes()
+    result = notes.getEvernote().findNotes(request, count, False)
+    update_count = lambda c: max(c - len(result.notes), 0)
+    count = update_count(count)
+    
+    while ((result.totalNotes != len(result.notes)) and count != 0):
+        offset = len(result.notes)
+        result.notes += notes.getEvernote().findNotes(request, count,
+                False, offset).notes
+        count = update_count(count)
+
     notes = []
-    results = Notes().get(None, None, notebook.name)
-    total = len(results.notes)
-    for key, note in enumerate(results.notes):
+    for key, note in enumerate(result.notes):
         notes.append(note)
     return notes
 
