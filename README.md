@@ -23,12 +23,11 @@
   
 ## Installation
 
-1. Clone and install geeknote from my personal geeknote fork ([neilagabriel/geeknote](https://github.com/neilagabriel/geeknote)). See [Geeknote](http://www.geeknote.me) webpage for installation
-   instructions. This is a temporary install step that will become unnecessary when my changes are merged into the mainline geeknote repository.
+1. If you have not done so already, install [Geeknote](http://www.geeknote.me)
+   and login to make sure it is functional. You must login before attempting to
+   use the plugin.
 
-2. Login with geeknote ('geeknote login') and verify it is functional.
-
-3. Use your plugin manager of choice to install plugin.
+2. Use your plugin manager of choice to install plugin.
 
 - [Vundle](https://github.com/gmarik/vundle)
   - Add `Bundle 'https://github.com/neilagabriel/vim-geeknote'` to .vimrc
