@@ -378,6 +378,11 @@ def GeeknoteActivateNode():
         vim.current.window.cursor = (row, col)
         return
 
+def GeeknoteSaveAsNote(args):
+    cmd = " ".join(args)
+    cmd = cmd.strip('"\'')
+    print cmd
+
 def GeeknoteCreateNote(name):
     name = name.strip('"\'')
     if explorer is None:
