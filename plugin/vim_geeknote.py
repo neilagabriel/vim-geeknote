@@ -156,6 +156,7 @@ def GeeknoteSaveNote(filename):
                 explorer.expandNotebook(notebook.guid)
                 explorer.render()
                 explorer.selectNote(note)
+            openNotes[filename]['note'] = note
         except:
             vim.command('echoerr "Failed to save note"')
 
