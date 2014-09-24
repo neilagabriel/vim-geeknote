@@ -8,7 +8,8 @@ from geeknote.geeknote import *
 from geeknote.tools    import *
 from geeknote.editor   import Editor
 
-import evernote.edam.type.ttypes as Types
+import evernote.edam.type.ttypes  as Types
+import evernote.edam.error.ttypes as Errors
 
 #======================== Globals ============================================#
 
@@ -61,24 +62,27 @@ def GeeknoteActivateNode():
         vim.current.window.cursor = (row, col)
         return
 
-def GeeknoteSaveAsNote(args):
-    cmd = " ".join(args)
-    cmd = cmd.strip('"\'')
-    print cmd
-
 def GeeknoteCreateNote(name):
-    name = name.strip('"\'')
-    if explorer is None:
-        GeeknoteToggle()
-        vim.command('echoerr "Please select a notebook first."')
-        return
+    #
+    # Figure out what notebook to place the note in. Give preference
+    # to the notebook selected in the explorer window (if one is 
+    # selected). Otherwise, place it into the default notebook.
+    #
+    notebook = None
+    if explorer is not None:
+        notebook = explorer.getSelectedNotebook()
 
-    notebook = explorer.getSelectedNotebook()
     if notebook is None:
-        explorer.selectNotebookIndex(0)
+        notebook = GeeknoteGetDefaultNotebook()
+
+    if notebook is None:
         vim.command('echoerr "Please select a notebook first."')
         return
 
+    # Cleanup the name of the note.
+    name = name.strip('"\'')
+
+    # Find a good place to open a new window for the note content.
     origWin = getActiveWindow()
     if isWindowUsable(origWin) is False:
         prevWin = getPreviousWindow()
@@ -86,6 +90,10 @@ def GeeknoteCreateNote(name):
         if isWindowUsable(prevWin) is False:
             vim.command('botright vertical new')
 
+    #
+    # Finally, open the blank note. The note will note be saved to the server
+    # until the user saves the buffer.
+    #
     GeeknoteOpenNote(None, name, notebook)
 
 def GeeknoteCreateNotebook(name):
@@ -102,30 +110,24 @@ def GeeknoteCreateNotebook(name):
     explorer.render()
     explorer.selectNotebook(notebook)
 
+def GeeknoteGetDefaultNotebook():
+    try:
+        noteStore = geeknote.getNoteStore()
+        return noteStore.getDefaultNotebook(geeknote.authToken)
+
+    except Errors.EDAMUserException as e:
+        vim.command('echoerr "%s"' % e.string)
+
+    except Errors.EDAMSystemException as e:
+        vim.command('echoerr "Unexpected error - %d: %s"' % \
+            (e.errorCode, e.string))
+
+    return None
+
 def GeeknoteGetNote(guid):
     geeknote = GeekNote()
     return geeknote.getNoteStore().getNote(
                geeknote.authToken, guid, True, False, False, False)
-
-def GeeknoteRenameNotebook(notebook, name):
-    notebook.name = name
-    try:
-        noteStore = Notes().getEvernote().getNoteStore()
-        authToken = Notes().getEvernote().authToken
-        return noteStore.updateNotebook(authToken, notebook)
-    except:
-        vim.command('echoerr "Failed to rename notebook."')
-    return None
-
-def GeeknoteRenameNote(note, title):
-    note.title = title
-    try:
-        noteStore = Notes().getEvernote().getNoteStore()
-        authToken = Notes().getEvernote().authToken
-        return noteStore.updateNote(authToken, note)
-    except:
-        vim.command('echoerr "Failed to rename note."')
-    return None
 
 def GeeknoteSaveNote(filename):
     result   = False
@@ -149,11 +151,11 @@ def GeeknoteSaveNote(filename):
     else:
         try:
             note = User().getEvernote().createNote(**inputData)
-
-            explorer.addNote(note, notebook)
-            explorer.expandNotebook(notebook.guid)
-            explorer.render()
-            explorer.selectNote(note)
+            if explorer is not None:
+                explorer.addNote(note, notebook)
+                explorer.expandNotebook(notebook.guid)
+                explorer.render()
+                explorer.selectNote(note)
         except:
             vim.command('echoerr "Failed to save note"')
 
@@ -207,5 +209,9 @@ def GeeknoteToggle():
     else:
         explorer.render()
 
-    explorer.selectNotebookIndex(0)
+    notebook = GeeknoteGetDefaultNotebook()
+    if notebook is not None:
+        explorer.selectNotebook(notebook)
+    else:
+        explorer.selectNotebookIndex(0)
 

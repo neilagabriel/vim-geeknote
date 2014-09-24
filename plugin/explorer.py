@@ -269,16 +269,36 @@ class Explorer(object):
         notebook.name = name
         try:
             return self.noteStore.updateNotebook(self.authToken, notebook)
-        except:
-            vim.command('echoerr "Failed to rename notebook."')
+
+        except Errors.EDAMUserException as e:
+            vim.command('echoerr "%s"' % e.string)
+
+        except Errors.EDAMSystemException as e:
+            vim.command('echoerr "Error %d: %s"' % \
+                (e.errorCode, e.string))
+
+        except Errors.EDAMNotFoundException as e:
+            vim.command('echoerr "Error: not found %s (type=%s)"' % \
+                (e.key, e.identifier))
+
         return None
 
     def renameNote(self, note, title):
         note.title = title
         try:
             return self.noteStore.updateNote(self.authToken, note)
-        except:
-            vim.command('echoerr "Failed to rename note."')
+
+        except Errors.EDAMUserException as e:
+            vim.command('echoerr "%s"' % e.string)
+
+        except Errors.EDAMSystemException as e:
+            vim.command('echoerr "Error %d: %s"' % \
+                (e.errorCode, e.string))
+
+        except Errors.EDAMNotFoundException as e:
+            vim.command('echoerr "Error: not found %s (type=%s)"' % \
+                (e.key, e.identifier))
+
         return None
 
     def selectNode(self, guid):
