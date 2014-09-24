@@ -50,11 +50,11 @@ Use `:GeeknoteCreateNotebook <name>` to create a new notebook.
 
 Use `:GeeknoteCreateNote <name>` to create a new note. The note will be created
 in the notebook currently selected in the navigation window. If a notebook is
-not selected, an error is displayed. A new buffer for the note will be
-displayed in the previous window if it is possible to do so or in a new
-vertical split. The note will not be created until the buffer is saved (e.g.
-`:w`). Once saved, the note will be created and the navigation window will
-update.
+not selected, the note will be created in the default notebook. A new buffer
+for the note will be displayed in the previous window if it is possible to do
+so or in a new vertical split. The note will not be created until the buffer is
+saved (e.g. `:w`). Once saved, the note will be created and the navigation
+window will update.
 
 Use `:GeeknoteSync` to update the navigation with the latest data on the
 Evernote server.
