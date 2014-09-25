@@ -220,12 +220,15 @@ def GeeknoteToggle():
                 ":call Vim_GeeknoteActivateNode()<cr>")
 
         explorer = Explorer(geeknote, dataFile, vim.current.buffer)
+        notebook = GeeknoteGetDefaultNotebook()
+        if notebook is not None:
+            explorer.selectNotebook(notebook)
+        else:
+            explorer.selectNotebookIndex(0)
     else:
-        explorer.render()
-
-    notebook = GeeknoteGetDefaultNotebook()
-    if notebook is not None:
-        explorer.selectNotebook(notebook)
-    else:
-        explorer.selectNotebookIndex(0)
+        if explorer.isHidden():
+            vim.command('topleft 50 vsplit')
+            explorer.show()
+        else:
+            explorer.hide()
 

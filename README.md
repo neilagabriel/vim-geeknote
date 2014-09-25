@@ -35,16 +35,22 @@
 - [Pathogen](https://github.com/tpope/vim-pathogen)
   - `git clone https://github.com/neilagabriel/vim-geeknote ~/.vim/bundle/vim-geeknote`
 
+3. Optional mappings:
+
+    noremap <F8> :Geeknote<cr>
+
 ## Usage
 
-Use `:Geeknote` to open the geeknote navigation window. This command will split
-the current window vertically and display the navigation window on the
-left-side. Notebooks can be expanded to show the notes they contain.  To expand
-a notebook, simply navigate to the name of the notebook and hit `<Enter>`. Hit
-`<Enter>` again to close the notebook. To open/view a note navigate to the note
-and hit `<Enter>`. The note will be displayed in the previous window if it is
-possible to do so or in a new vertical split. To save changes to the note,
-simply save the buffer (e.g. `:w`).
+Use `:Geeknote` to open/toggle the geeknote navigation window. If the
+navigation window is not visible, this command will split the current window
+vertically and display the navigation window on the left-side. If visible, the
+navigation window will be hidden. Notebooks can be expanded to show the notes
+they contain.  To expand a notebook, simply navigate to the name of the
+notebook and hit `<Enter>`. Hit `<Enter>` again to close the notebook. To
+open/view a note navigate to the note and hit `<Enter>`. The note will be
+displayed in the previous window if it is possible to do so or in a new
+vertical split. To save changes to the note, simply save the buffer (e.g.
+`:w`).
 
 Use `:GeeknoteCreateNotebook <name>` to create a new notebook.
 
@@ -76,7 +82,6 @@ the buffer.
 
 ## Todo
 
-- Toggle close
 - Tag support
 - Temp-file cleanup
 - Prettier navigation window

@@ -55,6 +55,7 @@ class Explorer(object):
 
         self.dataFile = dataFile
         self.buf      = buf
+        self.hidden   = False
 
         try:
             self.refresh()
@@ -229,6 +230,14 @@ class Explorer(object):
             return m.group(1)
         return None
 
+    #
+    # Hide the navigation buffer. This closes the window it is displayed in but
+    # does not destroy the buffer itself.
+    #
+    def hide(self):
+        vim.command('{}bunload'.format(self.buf.number))
+        self.hidden = True
+
     def initView(self):
         origWin = getActiveWindow()
         setActiveBuffer(self.buf)
@@ -245,6 +254,13 @@ class Explorer(object):
 
         vim.command('setfiletype geeknote')
         setActiveWindow(origWin)
+
+    #
+    # Is the navigation buffer hidden? When hidden, the buffer exists but is
+    # not active in any window.
+    #
+    def isHidden(self):
+        return self.hidden
 
     #
     # Move the given note into the specified notebook.
@@ -324,6 +340,14 @@ class Explorer(object):
         node = self.guidMap[guid]
         if isinstance(node, NotebookNode):
             self.expandState[guid] = not self.expandState[guid]
+
+    #
+    # Switch to the navigation buffer in the currently active window.
+    #
+    def show(self):
+        vim.command('buffer {}'.format(self.buf.number))
+        self.initView()
+        self.hidden = False
 
     # Render the navigation buffer in the navigation window..
     def render(self):
