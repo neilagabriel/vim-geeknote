@@ -78,7 +78,6 @@ the buffer.
 
 - Toggle close
 - Tag support
-- Temp-file cleanup
 - Prettier navigation window
 - Improved notebook creation process
 - Vim help
