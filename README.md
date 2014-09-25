@@ -63,7 +63,8 @@ saved (e.g. `:w`). Once saved, the note will be created and the navigation
 window will update.
 
 Use `:GeeknoteSync` to update the navigation with the latest data on the
-Evernote server.
+Evernote server. Warning, any notes that are opened when this command is issued
+will not be updated. Support for this will be added in future releases.
 
 To rename notebooks or notes, simply modify the the name of the notebook/note
 in the navigation window and save the bugger (e.g. `:w`). Any number of changes
@@ -82,8 +83,8 @@ the buffer.
 
 ## Todo
 
+- Refresh open notes upon `:GeeknoteSync`
 - Tag support
-- Temp-file cleanup
 - Prettier navigation window
 - Improved notebook creation process
 - Vim help
