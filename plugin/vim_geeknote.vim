@@ -2,7 +2,16 @@ python import sys
 python import vim
 python sys.path.append(vim.eval('expand("<sfile>:h")'))
 
+autocmd VimLeave * :call Vim_GeeknoteTerminate()
+
 " ---------------------- Functions --------------------------------------------
+
+function! Vim_GeeknoteTerminate()
+python << endOfPython
+from vim_geeknote import GeeknoteTerminate
+GeeknoteTerminate()
+endOfPython
+endfunction
 
 function! Vim_GeeknoteToggle()
 python << endOfPython
@@ -15,6 +24,14 @@ function! Vim_GeeknoteActivateNode()
 python << endOfPython
 from vim_geeknote import GeeknoteActivateNode
 GeeknoteActivateNode()
+endOfPython
+endfunction
+
+function! Vim_GeeknoteCloseNote(arg1)
+python << endOfPython
+from vim_geeknote import GeeknoteCloseNote
+filename = vim.eval("a:arg1")
+GeeknoteCloseNote(filename)
 endOfPython
 endfunction
 

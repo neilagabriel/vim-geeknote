@@ -62,6 +62,15 @@ def GeeknoteActivateNode():
         vim.current.window.cursor = (row, col)
         return
 
+def GeeknoteTerminate():
+    for key in openNotes:
+        os.remove(key)
+
+def GeeknoteCloseNote(filename):
+    if filename in openNotes:
+        os.remove(filename)
+        del openNotes[filename]
+
 def GeeknoteCreateNote(name):
     #
     # Figure out what notebook to place the note in. Give preference
@@ -188,11 +197,15 @@ def GeeknoteOpenNote(note, title=None, notebook=None):
             f.name, 
             ':call Vim_GeeknoteSaveNote("{}")'.format(f.name))
 
+    autocmd('BufDelete', 
+            f.name, 
+            ':call Vim_GeeknoteCloseNote("{}")'.format(f.name))
+
     openNotes[f.name] = (
         {
-            'note':note,
-            'title':title,
-            'notebook':notebook
+            'note'     : note,
+            'title'    : title,
+            'notebook' : notebook,
         })
 
 def GeeknoteToggle():
