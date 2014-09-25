@@ -29,15 +29,17 @@
 
 2. Use your plugin manager of choice to install plugin.
 
-- [Vundle](https://github.com/gmarik/vundle)
-  - Add `Bundle 'https://github.com/neilagabriel/vim-geeknote'` to .vimrc
-  - Run `:BundleInstall`
-- [Pathogen](https://github.com/tpope/vim-pathogen)
-  - `git clone https://github.com/neilagabriel/vim-geeknote ~/.vim/bundle/vim-geeknote`
+ - [Vundle](https://github.com/gmarik/vundle)
+   - Add `Bundle 'https://github.com/neilagabriel/vim-geeknote'` to .vimrc
+   - Run `:BundeInstall`
+ - [Pathogen](https://github.com/tpope/vim-pathogen)
+   - `git clone https://github.com/neilagabriel/vim-geeknote ~/.vim/bundle/vim-geeknote`
 
-3. Optional mappings:
+## Optional Setup
 
-    noremap <F8> :Geeknote<cr>
+- Customize as needed:
+
+    `noremap <F8> :Geeknote<cr>`
 
 ## Usage
 
