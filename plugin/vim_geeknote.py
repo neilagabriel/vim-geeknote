@@ -139,11 +139,24 @@ def GeeknoteGetNote(guid):
                geeknote.authToken, guid, True, False, False, False)
 
 def GeeknoteSaveNote(filename):
-    result   = False
-    note     = openNotes[filename]['note']
-    title    = openNotes[filename]['title']
-    notebook = openNotes[filename]['notebook']
-    content  = open(filename, 'r').read()
+    result    = False
+    note      = openNotes[filename]['note']
+    title     = openNotes[filename]['title']
+    notebook  = openNotes[filename]['notebook']
+    origTitle = title
+
+    content = ''
+    lines = open(filename, 'r').readlines()
+    if len(lines) > 0:
+        title = lines.pop(0).strip()
+        while len(lines) > 0:
+            if lines[0].strip() == '':
+                lines.pop(0)
+            else:
+                break
+
+    for r in lines:
+        content += r
 
     inputData = {}
     inputData['title']    = title
@@ -155,6 +168,12 @@ def GeeknoteSaveNote(filename):
     if note is not None:
         result = bool(User().getEvernote().updateNote(
             guid=note.guid, **inputData))
+
+        if title != origTitle:
+            if explorer is not None:
+                explorer.refresh()    
+                explorer.render()
+                explorer.selectNote(note)
 
     # Saving a new note.
     else:
@@ -184,7 +203,7 @@ def GeeknoteOpenNote(note, title=None, notebook=None):
         notebook = explorer.getContainingNotebook(note.guid)
 
     f = tempfile.NamedTemporaryFile(delete=False)
-    f.write('# ' + title + '\n\n')
+    f.write(title + '\n\n')
 
     if note is not None:
         text = ENMLtoText(note.content)

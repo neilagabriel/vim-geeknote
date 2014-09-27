@@ -58,10 +58,11 @@ vertically and display the navigation window on the left-side. If visible, the
 navigation window will be hidden. Notebooks can be expanded to show the notes
 they contain.  To expand a notebook, simply navigate to the name of the
 notebook and hit `<Enter>`. Hit `<Enter>` again to close the notebook. To
-open/view a note navigate to the note and hit `<Enter>`. The note will be
+open/view a note, navigate to the note and hit `<Enter>`. The note will be
 displayed in the previous window if it is possible to do so or in a new
 vertical split. To save changes to the note, simply save the buffer (e.g.
-`:w`).
+`:w`). The title of the note will be shown on the first line. The title line
+should not be deleted from the buffer but *may* be modified to rename the note.
 
 Use `:GeeknoteCreateNotebook <name>` to create a new notebook.
 
