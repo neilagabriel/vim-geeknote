@@ -15,20 +15,6 @@
 
 - Vim 7.4.364 or newer (issues observed with earlier versions)
 
-## Known Issues
-
-- Depending on formatting, note content is sometimes lost when saving notes.
-  The data may be retrieved by reading the temp file that was created for the
-  note (most often under /temp). This is actually an issue with Geeknote
-  itself. See
-  [Geeknote#223](https://github.com/VitaliyRodnenko/geeknote/issues/223).
-
-- Infrequently, errors are encountered while connecting with the Evernote
-  server to download the user data. See
-  [Geeknote#224](https://github.com/VitaliyRodnenko/geeknote/issues/224). To
-  know if you're hitting this issue, exit vim and run geeknote standalone and
-  see if it is able to list your notes (i.e. `geeknote list`).
-  
 ## Installation
 
 1. If you have not done so already, install [Geeknote](http://www.geeknote.me)
@@ -57,7 +43,7 @@ sometimes even the content itself may change. This is a result of the text
 conversion that Geeknote performs when reading/writing the note to the Evernote
 server. Unfortunately, Geeknote does not currently offer a way to work-around
 this issue which can be very annoying if you plan to create, edit, and view
-your notes in Vim. The following setting can be added to your `.vimrc` to work-
+your notes in Vim. The following setting can be added to your .vimrc to work-
 around the issue from with this plugin itself. When set, the content of your
 notes will be saved exactly how it is specified when the note is saved. The
 only downside of this approach is your notes will be formatted in plain-text if
