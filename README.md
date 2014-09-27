@@ -48,7 +48,7 @@
 
 Quick toggle:
 
-    `noremap <F8> :Geeknote<cr>`
+    noremap <F8> :Geeknote<cr>
 
 By default, regardless of whether you format your notes in plain-text or in
 markdown, the note content read back through Geeknote will not exactly match
@@ -63,7 +63,7 @@ notes will be saved exactly how it is specified when the note is saved. The
 only downside of this approach is your notes will be formatted in plain-text if
 you view from from Evernote.
 
-    `let g:GeeknoteFormat="pre"`
+    let g:GeeknoteFormat="pre"
 
 ## Usage
 
