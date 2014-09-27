@@ -50,8 +50,6 @@ Quick toggle:
 
     `noremap <F8> :Geeknote<cr>`
 
-- Customize as needed:
-
 By default, regardless of whether you format your notes in plain-text or in
 markdown, the note content read back through Geeknote will not exactly match
 the content you specified. Often the differences are just in formatting but
