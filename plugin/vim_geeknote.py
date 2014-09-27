@@ -1,6 +1,5 @@
 import vim
 import re
-import tempfile
 
 from explorer          import *
 from utils             import *
@@ -13,9 +12,9 @@ import evernote.edam.error.ttypes as Errors
 
 #======================== Globals ============================================#
 
-explorer  = None
-openNotes = {}
 geeknote  = GeekNote()
+explorer  = Explorer(geeknote)
+openNotes = {}
 
 #======================== Geeknote Functions  ================================#
 
@@ -77,10 +76,7 @@ def GeeknoteCreateNote(name):
     # to the notebook selected in the explorer window (if one is 
     # selected). Otherwise, place it into the default notebook.
     #
-    notebook = None
-    if explorer is not None:
-        notebook = explorer.getSelectedNotebook()
-
+    notebook = explorer.getSelectedNotebook()
     if notebook is None:
         notebook = GeeknoteGetDefaultNotebook()
 
@@ -109,8 +105,6 @@ def GeeknoteCreateNotebook(name):
     name = name.strip('"\'')
     try:
         notebook = Notebooks().create(name)
-        if explorer is None:
-            return
         explorer.addNotebook(notebook)
     except:
         vim.command('echoerr "Failed to create notebook."')
@@ -170,20 +164,18 @@ def GeeknoteSaveNote(filename):
             guid=note.guid, **inputData))
 
         if title != origTitle:
-            if explorer is not None:
-                explorer.refresh()    
-                explorer.render()
-                explorer.selectNote(note)
+            explorer.refresh()    
+            explorer.render()
+            explorer.selectNote(note)
 
     # Saving a new note.
     else:
         try:
             note = User().getEvernote().createNote(**inputData)
-            if explorer is not None:
-                explorer.addNote(note, notebook)
-                explorer.expandNotebook(notebook.guid)
-                explorer.render()
-                explorer.selectNote(note)
+            explorer.addNote(note, notebook)
+            explorer.expandNotebook(notebook.guid)
+            explorer.render()
+            explorer.selectNote(note)
             openNotes[filename]['note'] = note
         except:
             vim.command('echoerr "Failed to save note"')
@@ -191,10 +183,9 @@ def GeeknoteSaveNote(filename):
     return note
 
 def GeeknoteSync():
-    if explorer is not None:
-        explorer.syncChanges()
-        explorer.refresh()    
-        explorer.render()
+    explorer.syncChanges()
+    explorer.refresh()    
+    explorer.render()
 
 # Open an existing or new note in the active window.
 def GeeknoteOpenNote(note, title=None, notebook=None):
@@ -250,23 +241,8 @@ def GeeknoteToggle():
     global explorer
     global geeknote
 
-    if explorer is None:
-        dataFile = tempfile.NamedTemporaryFile(delete=True)
-        vim.command('topleft 50 vsplit {}'.format(dataFile.name))
-
-        noremap("<silent> <buffer> <cr>", 
-                ":call Vim_GeeknoteActivateNode()<cr>")
-
-        explorer = Explorer(geeknote, dataFile, vim.current.buffer)
-        notebook = GeeknoteGetDefaultNotebook()
-        if notebook is not None:
-            explorer.selectNotebook(notebook)
-        else:
-            explorer.selectNotebookIndex(0)
+    if explorer.isHidden():
+        explorer.show()
     else:
-        if explorer.isHidden():
-            vim.command('topleft 50 vsplit')
-            explorer.show()
-        else:
-            explorer.hide()
+        explorer.hide()
 

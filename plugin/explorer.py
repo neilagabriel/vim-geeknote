@@ -1,5 +1,6 @@
 import vim
 import re
+import tempfile
 
 from utils import *
 from geeknote.geeknote import *
@@ -29,44 +30,22 @@ class NoteNode(Node):
         self.title = title
 
 class Explorer(object):
-
-    # A list of nodes for each notebook displayed in the explorer.
-    notebooks = []
-
-    # Maps the guid of each node to its underlying node object (includes notes)
-    guidMap = {}
-
-    # Maps notebook guids to the notebook's expand state (expanded/!explanded)
-    expandState = {}
-
-    #
-    # A list of nodes (notebooks or nodes) that have been modified since the
-    # last time the navigation window was synchronized with the server.
-    #
+    notebooks     = []
+    guidMap       = {}
+    expandState   = {}
     modifiedNodes = []
+    dataFile      = None
+    buffer        = None
 
-    # The file used to back the data store in the navigation window.
-    dataFile = None
-
-    def __init__(self, geeknote, dataFile, buf):
+    def __init__(self, geeknote):
         self.geeknote  = geeknote
         self.noteStore = self.geeknote.getNoteStore()
         self.authToken = self.geeknote.authToken
+        self.hidden    = True
 
-        self.dataFile = dataFile
-        self.buf      = buf
-        self.hidden   = False
+        self.refresh()
 
-        try:
-            self.refresh()
-        except:
-            vim.command('echoerr "Failed to retrieve data from server"')
-            raise
-
-        self.initView()
-        self.render()
-
-        # XXX: Move this into vim_geeknote.py
+        self.dataFile = tempfile.NamedTemporaryFile(delete=True)
         autocmd('BufWritePre', self.dataFile.name, ':call Vim_GeeknoteSync()')
 
     def __del__(self):
@@ -76,11 +55,11 @@ class Explorer(object):
             pass
 
     def applyChanges(self):
-        if isBufferModified(self.buf.number) is False:
+        if isBufferModified(self.buffer.number) is False:
             return
 
-        for row in xrange(len(self.buf)):
-            line = self.buf[row]
+        for row in xrange(len(self.buffer)):
+            line = self.buffer[row]
 
             # Look for changes to notes.
             r = re.compile('^\s+(.+)\[(.+)\]$')
@@ -157,7 +136,7 @@ class Explorer(object):
     #
     def findNotebookForNode(self, nodeRow):
         while nodeRow > 0:
-            guid = self.getNodeGuid(self.buf[nodeRow])
+            guid = self.getNodeGuid(self.buffer[nodeRow])
             if guid is not None: 
                 node = self.guidMap[guid]
                 if isinstance(node, NotebookNode):
@@ -166,7 +145,7 @@ class Explorer(object):
         return None
 
     def getBuffer(self):
-        return self.buf
+        return self.buffer
 
     def getNotebook(self, guid):
         node = self.guidMap[guid]
@@ -210,7 +189,7 @@ class Explorer(object):
 
     def getSelectedNotebook(self):
         prevWin = getActiveWindow()
-        setActiveBuffer(self.buf)
+        setActiveBuffer(self.buffer)
         text = vim.current.line
         setActiveWindow(prevWin)
 
@@ -235,15 +214,15 @@ class Explorer(object):
     # does not destroy the buffer itself.
     #
     def hide(self):
-        vim.command('{}bunload'.format(self.buf.number))
+        vim.command('{}bunload'.format(self.buffer.number))
         self.hidden = True
 
     def initView(self):
         origWin = getActiveWindow()
-        setActiveBuffer(self.buf)
+        setActiveBuffer(self.buffer)
 
         wnum = getActiveWindow()
-        bnum = self.buf.number
+        bnum = self.buffer.number
 
         setWindowVariable(wnum, 'winfixwidth', True)
         setWindowVariable(wnum, 'wrap'       , False)
@@ -319,7 +298,7 @@ class Explorer(object):
 
     def selectNode(self, guid):
         origWin = getActiveWindow()
-        setActiveBuffer(self.buf)
+        setActiveBuffer(self.buffer)
         node = self.guidMap[guid]
         if node is not None:
             vim.current.window.cursor = (node.row, 0)
@@ -345,14 +324,21 @@ class Explorer(object):
     # Switch to the navigation buffer in the currently active window.
     #
     def show(self):
-        vim.command('buffer {}'.format(self.buf.number))
+        vim.command('topleft 50 vsplit {}'.format(self.dataFile.name))
+        self.buffer = vim.current.buffer
+
         self.initView()
+        self.render()
+
+        noremap("<silent> <buffer> <cr>", 
+            ":call Vim_GeeknoteActivateNode()<cr>")
+
         self.hidden = False
 
     # Render the navigation buffer in the navigation window..
     def render(self):
         origWin = getActiveWindow()
-        setActiveBuffer(self.buf)
+        setActiveBuffer(self.buffer)
 
         # 
         # Before overwriting the naviagation window, look for any changes made
@@ -362,7 +348,7 @@ class Explorer(object):
         self.applyChanges()
 
         # Clear the navigation buffer to get rid of old content (if any).
-        del self.buf[:]
+        del self.buffer[:]
 
         # Prepare the new content and append it to the navigation buffer.
         content = []
@@ -390,7 +376,7 @@ class Explorer(object):
                     content.append(line)
                     noteNode.row = row
                     row += 1
-        self.buf.append(content, 0)
+        self.buffer.append(content, 0)
 
         #
         # Write the navigation window but disable BufWritePre events before
