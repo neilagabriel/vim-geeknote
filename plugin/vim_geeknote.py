@@ -6,7 +6,7 @@ from explorer          import *
 from utils             import *
 from geeknote.geeknote import *
 from geeknote.tools    import *
-from geeknote.editor   import Editor
+from enml              import *
 
 import evernote.edam.type.ttypes  as Types
 import evernote.edam.error.ttypes as Errors
@@ -147,7 +147,7 @@ def GeeknoteSaveNote(filename):
 
     inputData = {}
     inputData['title']    = title
-    inputData['content']  = Editor.textToENML(content)
+    inputData['content']  = textToENML(content)
     inputData['tags']     = None
     inputData['notebook'] = notebook.guid
 
@@ -186,7 +186,7 @@ def GeeknoteOpenNote(note, title=None, notebook=None):
     f = tempfile.NamedTemporaryFile(delete=False)
 
     if note is not None:
-        text = Editor.ENMLtoText(note.content)
+        text = ENMLtoText(note.content)
         text = tools.stdoutEncode(text)
         f.write(text)
     f.close()

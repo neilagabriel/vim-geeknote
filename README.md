@@ -37,7 +37,24 @@
 
 3. Optional mappings:
 
+Quick toggle:
+
     noremap <F8> :Geeknote<cr>
+
+By default, regardless of whether you format your notes in plain-text or in
+markdown, the note content read back through Geeknote will not exactly match
+the content you specified. Often the differences are just in formatting but
+sometimes even the content itself may change. This is a result of the text
+conversion that Geeknote performs when reading/writing the note to the Evernote
+server. Unfortunately, Geeknote does not currently offer a way to work-around
+this issue which can be very annoying if you plan to create, edit, and view
+your notes in Vim. The following setting can be added to your `.vimrc` to work-
+around the issue from with this plugin itself. When set, the content of your
+notes will be saved exactly how it is specified when the note is saved. The
+only downside of this approach is your notes will be formatted in plain-text if
+you view from from Evernote.
+
+    let g:GeeknoteFormat="pre"
 
 ## Usage
 
