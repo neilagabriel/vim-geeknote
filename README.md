@@ -23,12 +23,11 @@
 
 2. Use your plugin manager of choice to install plugin.
 
- - [Vundle](https://github.com/gmarik/vundle)
+- [Vundle](https://github.com/gmarik/vundle)
    - Add `Bundle 'https://github.com/neilagabriel/vim-geeknote'` to .vimrc
    - Run `:BundeInstall`
- - [Pathogen](https://github.com/tpope/vim-pathogen)
-   - `git clone https://github.com/neilagabriel/vim-geeknote
-     ~/.vim/bundle/vim-geeknote`
+- [Pathogen](https://github.com/tpope/vim-pathogen)
+   - `git clone https://github.com/neilagabriel/vim-geeknote ~/.vim/bundle/vim-geeknote`
 
 ## Optional Setup
 
