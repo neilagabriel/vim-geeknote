@@ -6,7 +6,7 @@ from explorer          import *
 from utils             import *
 from geeknote.geeknote import *
 from geeknote.tools    import *
-from geeknote.editor   import Editor
+from enml              import *
 
 import evernote.edam.type.ttypes  as Types
 import evernote.edam.error.ttypes as Errors
@@ -147,7 +147,7 @@ def GeeknoteSaveNote(filename):
 
     inputData = {}
     inputData['title']    = title
-    inputData['content']  = Editor.textToENML(content)
+    inputData['content']  = textToENML(content)
     inputData['tags']     = None
     inputData['notebook'] = notebook.guid
 
@@ -187,7 +187,7 @@ def GeeknoteOpenNote(note, title=None, notebook=None):
     f.write('# ' + title + '\n\n')
 
     if note is not None:
-        text = Editor.ENMLtoText(note.content)
+        text = ENMLtoText(note.content)
         text = tools.stdoutEncode(text)
         f.write(text)
     else:
@@ -237,12 +237,15 @@ def GeeknoteToggle():
                 ":call Vim_GeeknoteActivateNode()<cr>")
 
         explorer = Explorer(geeknote, dataFile, vim.current.buffer)
+        notebook = GeeknoteGetDefaultNotebook()
+        if notebook is not None:
+            explorer.selectNotebook(notebook)
+        else:
+            explorer.selectNotebookIndex(0)
     else:
-        explorer.render()
-
-    notebook = GeeknoteGetDefaultNotebook()
-    if notebook is not None:
-        explorer.selectNotebook(notebook)
-    else:
-        explorer.selectNotebookIndex(0)
+        if explorer.isHidden():
+            vim.command('topleft 50 vsplit')
+            explorer.show()
+        else:
+            explorer.hide()
 
