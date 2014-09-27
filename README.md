@@ -17,9 +17,17 @@
 
 ## Known Issues
 
-- Depending on formatting, note content is sometimes lost when saving notes. The data may be retrieved by reading the temp file that was created for the note (most often under /temp). This is actually an issue with Geeknote itself. See [Geeknote#223](https://github.com/VitaliyRodnenko/geeknote/issues/223).
+- Depending on formatting, note content is sometimes lost when saving notes.
+  The data may be retrieved by reading the temp file that was created for the
+  note (most often under /temp). This is actually an issue with Geeknote
+  itself. See
+  [Geeknote#223](https://github.com/VitaliyRodnenko/geeknote/issues/223).
 
-- Infrequently, errors are encountered while connecting with the Evernote server to download the user data. See [Geeknote#224](https://github.com/VitaliyRodnenko/geeknote/issues/224). To know if you're hitting this issue, exit vim and run geeknote standalone and see if it is able to list your notes (i.e. `geeknote list`).
+- Infrequently, errors are encountered while connecting with the Evernote
+  server to download the user data. See
+  [Geeknote#224](https://github.com/VitaliyRodnenko/geeknote/issues/224). To
+  know if you're hitting this issue, exit vim and run geeknote standalone and
+  see if it is able to list your notes (i.e. `geeknote list`).
   
 ## Installation
 
@@ -29,17 +37,20 @@
 
 2. Use your plugin manager of choice to install plugin.
 
-- [Vundle](https://github.com/gmarik/vundle)
-  - Add `Bundle 'https://github.com/neilagabriel/vim-geeknote'` to .vimrc
-  - Run `:BundleInstall`
-- [Pathogen](https://github.com/tpope/vim-pathogen)
-  - `git clone https://github.com/neilagabriel/vim-geeknote ~/.vim/bundle/vim-geeknote`
+ - [Vundle](https://github.com/gmarik/vundle)
+   - Add `Bundle 'https://github.com/neilagabriel/vim-geeknote'` to .vimrc
+   - Run `:BundeInstall`
+ - [Pathogen](https://github.com/tpope/vim-pathogen)
+   - `git clone https://github.com/neilagabriel/vim-geeknote
+     ~/.vim/bundle/vim-geeknote`
 
-3. Optional mappings:
+## Optional Setup
 
 Quick toggle:
 
-    noremap <F8> :Geeknote<cr>
+    `noremap <F8> :Geeknote<cr>`
+
+- Customize as needed:
 
 By default, regardless of whether you format your notes in plain-text or in
 markdown, the note content read back through Geeknote will not exactly match
@@ -54,7 +65,7 @@ notes will be saved exactly how it is specified when the note is saved. The
 only downside of this approach is your notes will be formatted in plain-text if
 you view from from Evernote.
 
-    let g:GeeknoteFormat="pre"
+    `let g:GeeknoteFormat="pre"`
 
 ## Usage
 
