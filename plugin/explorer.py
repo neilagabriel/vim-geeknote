@@ -188,6 +188,9 @@ class Explorer(object):
         return None
 
     def getSelectedNotebook(self):
+        if self.buffer is None:
+            return None
+
         prevWin = getActiveWindow()
         setActiveBuffer(self.buffer)
         text = vim.current.line
@@ -297,6 +300,9 @@ class Explorer(object):
         return None
 
     def selectNode(self, guid):
+        if self.buffer is None:
+            return
+
         origWin = getActiveWindow()
         setActiveBuffer(self.buffer)
         node = self.guidMap[guid]
@@ -337,6 +343,9 @@ class Explorer(object):
 
     # Render the navigation buffer in the navigation window..
     def render(self):
+        if self.buffer is None:
+            return
+
         origWin = getActiveWindow()
         setActiveBuffer(self.buffer)
 

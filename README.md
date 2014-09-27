@@ -74,6 +74,11 @@ so or in a new vertical split. The note will not be created until the buffer is
 saved (e.g. `:w`). Once saved, the note will be created and the navigation
 window will update.
 
+Use `:GeeknoteSaveAsNote` to create a new note using the content of the current
+buffer. The first line in the buffer will be used as the note's title. The
+remainder of the buffer will be saved as note content. Note this this command
+will create and switch to a new buffer.
+
 Use `:GeeknoteSync` to update the navigation with the latest data on the
 Evernote server. Warning, any notes that are opened when this command is issued
 will not be updated. Support for this will be added in future releases.

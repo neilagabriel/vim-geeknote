@@ -132,6 +132,63 @@ def GeeknoteGetNote(guid):
     return geeknote.getNoteStore().getNote(
                geeknote.authToken, guid, True, False, False, False)
 
+def GeeknoteSaveAsNote():
+    global explorer
+
+    #
+    # Figure out what notebook to place the note in. Give preference
+    # to the notebook selected in the explorer window (if one is 
+    # selected). Otherwise, place it into the default notebook.
+    #
+    notebook = None
+    if explorer is not None:
+        notebook = explorer.getSelectedNotebook()
+
+    if notebook is None:
+        notebook = GeeknoteGetDefaultNotebook()
+
+    if notebook is None:
+        vim.command('echoerr "Please select a notebook first."')
+        return
+
+    title = ''
+    rows  = len(vim.current.buffer)
+    if rows > 0:
+        title = vim.current.buffer[0].strip()
+    else:
+        vim.command('echoerr "Cannot save empty note."')
+        return
+
+    content = ''
+    if rows > 1:
+        start = 1
+        while start < rows:
+            if vim.current.buffer[start].strip() != '':
+                break
+            start += 1
+        for r in range(start, len(vim.current.buffer)):
+            content += vim.current.buffer[r] + '\n'
+
+    inputData = {}
+    inputData['title']    = title
+    inputData['content']  = textToENML(content)
+    inputData['tags']     = None
+    inputData['notebook'] = notebook.guid
+
+    try:
+        note = geeknote.createNote(**inputData)
+        note = GeeknoteGetNote(note.guid)
+    except:
+        vim.command('echoerr "Failed to save note"')
+        return
+
+    explorer.addNote(note, notebook)
+    explorer.expandNotebook(notebook.guid)
+    explorer.render()
+    explorer.selectNote(note)
+
+    GeeknoteOpenNote(note, title, notebook)
+
 def GeeknoteSaveNote(filename):
     result    = False
     note      = openNotes[filename]['note']
