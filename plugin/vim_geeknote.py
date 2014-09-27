@@ -202,47 +202,49 @@ def GeeknoteOpenNote(note, title=None, notebook=None):
         title    = note.title
         notebook = explorer.getContainingNotebook(note.guid)
 
-    f = tempfile.NamedTemporaryFile(delete=False)
-    f.write(title + '\n\n')
+    opened = False
+    for fname in openNotes:
+        if openNotes[fname]['title'] == title:
+            opened = True
+            break
 
-    if note is not None:
-        text = ENMLtoText(note.content)
-        text = tools.stdoutEncode(text)
-        f.write(text)
+    if opened is False:
+        f = tempfile.NamedTemporaryFile(delete=False)
+        f.write(title + '\n\n')
+
+        if note is not None:
+            text = ENMLtoText(note.content)
+            text = tools.stdoutEncode(text)
+            f.write(text)
+        else:
+            f.write("<add content here>\n")
+        f.close()
+
+        openNotes[f.name] = {'note':note, 'title':title, 'notebook':notebook}
+
+        vim.command('edit {}'.format(f.name))
+
+        # Position the cursor at a convenient location when opening a new note.
+        if note is None:
+            vim.current.window.cursor = (3, 0)
+
+        autocmd('BufWritePost', f.name, 
+            ':call Vim_GeeknoteSaveNote("{}")'.format(f.name))
+     
+        autocmd('BufDelete', f.name, 
+            ':call Vim_GeeknoteCloseNote("{}")'.format(f.name))
     else:
-        f.write("<add content here>\n")
-    f.close()
-
-    vim.command('edit {}'.format(f.name))
-
-    # Position the cursor at a convenient location when opening a new note.
-    if note is None:
-        vim.current.window.cursor = (3, 0)
+        vim.command("buffer {}".format(fname))
 
     #
     # By default, Geeknote expects to receive notes with markdown-formated
-    # content. Set the buffer's 'filetype' and 'syntax' options accordingly.
+    # content. Set the buffer's 'filetype' and 'syntax' options.
     #
     # TODO: Figure out why setting the 'syntax' buffer option alone does not
     #       enable syntax highlighting and why setlocal is needed instead.
     #
     vim.current.buffer.options['filetype'] = 'markdown'
     vim.command('setlocal syntax=markdown')
-
-    autocmd('BufWritePost', 
-            f.name, 
-            ':call Vim_GeeknoteSaveNote("{}")'.format(f.name))
-
-    autocmd('BufDelete', 
-            f.name, 
-            ':call Vim_GeeknoteCloseNote("{}")'.format(f.name))
-
-    openNotes[f.name] = (
-        {
-            'note'     : note,
-            'title'    : title,
-            'notebook' : notebook,
-        })
 
 def GeeknoteToggle():
     global explorer
