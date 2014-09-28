@@ -121,7 +121,10 @@ class Explorer(object):
 
     def closeAll(self):
         for guid in self.expandState:
-            self.expandState[guid] = False
+            self.closeNotebook(guid)
+
+    def closeNotebook(self, guid):
+        self.expandState[guid] = False
 
     def expandAll(self):
         for guid in self.expandState:
@@ -158,6 +161,11 @@ class Explorer(object):
         if isinstance(node, NoteNode):
             return node.note
         return None
+
+    def getNoteCount(self, notebook):
+        if notebook.guid in self.noteCounts.notebookCounts:
+            return self.noteCounts.notebookCounts[notebook.guid]
+        return 0
 
     #
     # Return a list of all notes contained in the given notebook.
@@ -259,6 +267,9 @@ class Explorer(object):
         del self.notebooks[:]
         self.guidMap.clear()
 
+        self.noteCounts = self.noteStore.findNoteCounts(
+            self.authToken, NoteStore.NoteFilter(), False)
+
         notebooks = GeekNote().findNotebooks()
         for notebook in notebooks:
             self.addNotebook(notebook)
@@ -324,7 +335,10 @@ class Explorer(object):
     def toggleNotebook(self, guid):
         node = self.guidMap[guid]
         if isinstance(node, NotebookNode):
-            self.expandState[guid] = not self.expandState[guid]
+            if self.expandState[guid] is True:
+                self.closeNotebook(guid)
+            else:
+                self.expandNotebook(guid)
 
     #
     # Switch to the navigation buffer in the currently active window.
@@ -367,7 +381,7 @@ class Explorer(object):
         row = 3
         for node in self.notebooks:
             notebook = node.notebook
-            numNotes = len(node.notes)
+            numNotes = self.getNoteCount(notebook)
             expand   = self.expandState[notebook.guid]
 
             line  = '-' if expand is True or numNotes == 0 else '+'
