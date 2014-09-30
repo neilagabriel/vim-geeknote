@@ -105,3 +105,8 @@ the buffer.
 - Prettier navigation window
 - Improved notebook creation process
 - Vim help
+
+## License
+
+Copyright (c) Neil Gabriel. Distributed under the same terms as Vim itself.
+See `:help license`.
