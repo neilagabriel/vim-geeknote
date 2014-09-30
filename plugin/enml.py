@@ -30,6 +30,10 @@ def textToENML(content):
     if format == 'geeknote':
         return Editor.textToENML(content) 
 
+    content = content.replace('<', '&lt;')
+    content = content.replace('>', '&gt;')
     content = unicode(content, "utf-8")
     contentHTML = u''.join(('<pre>', content, '</pre>')).encode("utf-8")
-    return Editor.wrapENML(contentHTML)
+
+    enml = Editor.wrapENML(contentHTML)
+    return enml

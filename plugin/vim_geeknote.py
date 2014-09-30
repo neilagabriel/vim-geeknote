@@ -169,17 +169,20 @@ def GeeknoteSaveAsNote():
         for r in range(start, len(vim.current.buffer)):
             content += vim.current.buffer[r] + '\n'
 
-    inputData = {}
-    inputData['title']    = title
-    inputData['content']  = textToENML(content)
-    inputData['tags']     = None
-    inputData['notebook'] = notebook.guid
+        note         = Types.Note()
+        note.title   = title
+        note.content = textToENML(content)
+        note.created = None
+        note.notebookGuid = notebook.guid
 
     try:
-        note = geeknote.createNote(**inputData)
+        notestore = geeknote.getNoteStore()
+        authToken = geeknote.authToken
+
+        notestore.createNote(authToken, note)
         note = GeeknoteGetNote(note.guid)
-    except:
-        vim.command('echoerr "Failed to save note"')
+    except Exception as e:
+        GeeknoteHandleNoteSaveFailure(note, e)
         return
 
     explorer.addNote(note, notebook)
@@ -209,35 +212,54 @@ def GeeknoteSaveNote(filename):
     for r in lines:
         content += r
 
-    inputData = {}
-    inputData['title']    = title
-    inputData['content']  = textToENML(content)
-    inputData['tags']     = None
-    inputData['notebook'] = notebook.guid
+    notestore = geeknote.getNoteStore()
+    authToken = geeknote.authToken
 
-    # Saving an existing note.
-    if note is not None:
-        result = bool(User().getEvernote().updateNote(
-            guid=note.guid, **inputData))
+    try:
+        # Saving an existing note.
+        if note is not None:
+            note.title   = title
+            note.content = textToENML(content)
+            note.notebookGuid = notebook.guid
+            notestore.updateNote(authToken, note)
 
-        if title != origTitle:
-            explorer.refresh()    
-            explorer.render()
-            explorer.selectNote(note)
+            if title != origTitle:
+                explorer.refresh()    
+                explorer.render()
 
-    # Saving a new note.
-    else:
-        try:
-            note = User().getEvernote().createNote(**inputData)
+        # Saving a new note.
+        else:
+            note         = Types.Note()
+            note.title   = title
+            note.content = textToENML(content)
+            note.created = None
+            note.notebookGuid = notebook.guid
+
+            notestore.createNote(authToken, note)
+            note = GeeknoteGetNote(note.guid)
+
             explorer.addNote(note, notebook)
             explorer.expandNotebook(notebook.guid)
             explorer.render()
-            explorer.selectNote(note)
-            openNotes[filename]['note'] = note
-        except:
-            vim.command('echoerr "Failed to save note"')
 
+            openNotes[filename]['note'] = note
+    except Exception as e:
+        GeeknoteHandleNoteSaveFailure(note, e)
+        return None
+
+    explorer.selectNote(note)
     return note
+
+def GeeknoteHandleNoteSaveFailure(note, e):
+    msg  = '%s\n' % e
+    msg += '+------------------- WARNING -------------------+\n'
+    msg += '|                                               |\n'
+    msg += '| Failed to save note (see error above)         |\n'
+    msg += '|                                               |\n'
+    msg += '| Save buffer to a file to avoid losing content |\n'
+    msg += '|                                               |\n'
+    msg += '+------------------- WARNING -------------------+\n'
+    vim.command('echoerr "%s"' % msg)
 
 def GeeknoteSync():
     explorer.syncChanges()
