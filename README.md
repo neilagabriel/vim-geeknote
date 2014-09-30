@@ -9,7 +9,7 @@
 
 ## Known Issues
 
-1. Notes containing '<', '<=', and other logical operators will not save. Still
+1. Notes containing `'<'`, `'<='`, and other logical operators will not save. Still
    investigating. I expect it throws off the Text->HTML->ENML conversion.
 
 ## Screenshots
