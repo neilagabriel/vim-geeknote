@@ -179,7 +179,7 @@ def GeeknoteSaveAsNote():
         notestore = geeknote.getNoteStore()
         authToken = geeknote.authToken
 
-        notestore.createNote(authToken, note)
+        note = notestore.createNote(authToken, note)
         note = GeeknoteGetNote(note.guid)
     except Exception as e:
         GeeknoteHandleNoteSaveFailure(note, e)
