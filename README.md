@@ -7,6 +7,11 @@
 - Notebook and note viewing, renaming, and creation.
 - Editing note content.
 
+## Known Issues
+
+1. Notes containing '<', '<=', and other logical operators will not save. Still
+   investigating. I expect it throws off the Text->HTML->ENML conversion.
+
 ## Screenshots
 
 ![img](https://github.com/neilagabriel/vim-geeknote/blob/master/img/explorer.png)
