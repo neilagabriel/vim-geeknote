@@ -4,8 +4,9 @@
 
 ## Supported Features
 
-- Notebook and note viewing, renaming, and creation.
-- Editing note content.
+Integrates Geeknote/Evernote into Vim.
+- Notebook navigation, creation, and renaming
+- Note viewing, renaming, editing, and creation.
 
 ## Screenshots
 
@@ -66,6 +67,10 @@ should not be deleted from the buffer but *may* be modified to rename the note.
 
 Use `:GeeknoteCreateNotebook <name>` to create a new notebook.
 
+To rename notebooks or notes, simply modify the the name of the notebook/note
+in the navigation window and save the bugger (e.g. `:w`). Any number of changes
+can be made before saving, but be sure not to modify an item's GUID.
+
 Use `:GeeknoteCreateNote <name>` to create a new note. The note will be created
 in the notebook currently selected in the navigation window. If a notebook is
 not selected, the note will be created in the default notebook. A new buffer
@@ -79,18 +84,14 @@ buffer. The first line in the buffer will be used as the note's title. The
 remainder of the buffer will be saved as note content. Note this this command
 will create and switch to a new buffer.
 
-Use `:GeeknoteSync` to update the navigation with the latest data on the
-Evernote server. Warning, any notes that are opened when this command is issued
-will not be updated. Support for this will be added in future releases.
-
-To rename notebooks or notes, simply modify the the name of the notebook/note
-in the navigation window and save the bugger (e.g. `:w`). Any number of changes
-can be made before saving, but be sure not to modify an item's GUID.
-
 To move a note into a different notebook, simply move the note's text (includes
 title and GUID) under the desired notebook in the navigation window and save
 the buffer. Similar to renaming, any number notes can be moved before saving
 the buffer.
+
+Use `:GeeknoteSync` to update the navigation with the latest data on the
+Evernote server. Warning, any notes that are opened when this command is issued
+will not be updated. Support for this will be added in future releases.
 
 ## Acknowledgments
 
@@ -104,7 +105,6 @@ the buffer.
 - Tag support
 - Prettier navigation window
 - Improved notebook creation process
-- Vim help
 
 ## License
 
