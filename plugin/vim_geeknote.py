@@ -13,6 +13,8 @@ import evernote.edam.error.ttypes as Errors
 #======================== Globals ============================================#
 
 geeknote  = GeekNote()
+authToken = geeknote.authToken
+noteStore = geeknote.getNoteStore()
 explorer  = Explorer(geeknote)
 openNotes = {}
 
@@ -115,8 +117,7 @@ def GeeknoteCreateNotebook(name):
 
 def GeeknoteGetDefaultNotebook():
     try:
-        noteStore = geeknote.getNoteStore()
-        return noteStore.getDefaultNotebook(geeknote.authToken)
+        return noteStore.getDefaultNotebook(authToken)
 
     except Errors.EDAMUserException as e:
         vim.command('echoerr "%s"' % e.string)
@@ -128,9 +129,8 @@ def GeeknoteGetDefaultNotebook():
     return None
 
 def GeeknoteGetNote(guid):
-    geeknote = GeekNote()
     return geeknote.getNoteStore().getNote(
-               geeknote.authToken, guid, True, False, False, False)
+               authToken, guid, True, False, False, False)
 
 def GeeknoteSaveAsNote():
     global explorer
@@ -176,10 +176,7 @@ def GeeknoteSaveAsNote():
         note.notebookGuid = notebook.guid
 
     try:
-        notestore = geeknote.getNoteStore()
-        authToken = geeknote.authToken
-
-        note = notestore.createNote(authToken, note)
+        note = noteStore.createNote(authToken, note)
         note = GeeknoteGetNote(note.guid)
     except Exception as e:
         GeeknoteHandleNoteSaveFailure(note, e)
@@ -212,16 +209,13 @@ def GeeknoteSaveNote(filename):
     for r in lines:
         content += r
 
-    notestore = geeknote.getNoteStore()
-    authToken = geeknote.authToken
-
     try:
         # Saving an existing note.
         if note is not None:
             note.title   = title
             note.content = textToENML(content)
             note.notebookGuid = notebook.guid
-            notestore.updateNote(authToken, note)
+            noteStore.updateNote(authToken, note)
 
             if title != origTitle:
                 explorer.refresh()    
@@ -235,7 +229,7 @@ def GeeknoteSaveNote(filename):
             note.created = None
             note.notebookGuid = notebook.guid
 
-            notestore.createNote(authToken, note)
+            noteStore.createNote(authToken, note)
             note = GeeknoteGetNote(note.guid)
 
             explorer.addNote(note, notebook)
