@@ -229,7 +229,7 @@ def GeeknoteSaveNote(filename):
             note.created = None
             note.notebookGuid = notebook.guid
 
-            noteStore.createNote(authToken, note)
+            note = noteStore.createNote(authToken, note)
             note = GeeknoteGetNote(note.guid)
 
             explorer.addNote(note, notebook)
