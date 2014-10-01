@@ -266,11 +266,16 @@ def GeeknoteOpenNote(note, title=None, notebook=None):
         title    = note.title
         notebook = explorer.getContainingNotebook(note.guid)
 
+    #
+    # Check to see if the note is already opened before opening it in a new
+    # buffer. Only do this when opening an existing note.
+    #
     opened = False
-    for fname in openNotes:
-        if openNotes[fname]['title'] == title:
-            opened = True
-            break
+    if note is not None:
+        for fname in openNotes:
+            if openNotes[fname]['note'].guid == note.guid:
+                opened = True
+                break
 
     if opened is False:
         f = tempfile.NamedTemporaryFile(delete=False)
