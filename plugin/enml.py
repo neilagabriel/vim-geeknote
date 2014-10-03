@@ -6,11 +6,14 @@ from geeknote.editor import Editor
 from bs4             import BeautifulSoup
 
 def ENMLtoText(contentENML):
-    format = 'geeknote'
+    format = 'vim-default'
     if int(vim.eval('exists("g:GeeknoteFormat")')):
         format = vim.eval('g:GeeknoteFormat')
 
-    if format != 'geeknote':
+    if format == 'pre':
+        print 'WARNING: g:GeeknoteFormat=pre is deprecated.'
+
+    if format == 'vim-default' or format == 'pre':
         soup = BeautifulSoup(contentENML.decode('utf-8'))
         sections = soup.select('pre')
         if len(sections) >= 1:
@@ -21,14 +24,16 @@ def ENMLtoText(contentENML):
             return content.encode('utf-8')
     return Editor.ENMLtoText(contentENML)
 
-
 def textToENML(content):
-    format = 'geeknote'
+    format = 'vim-default'
     if int(vim.eval('exists("g:GeeknoteFormat")')):
         format = vim.eval('g:GeeknoteFormat')
 
-    if format == 'geeknote':
-        return Editor.textToENML(content) 
+    if format == 'pre':
+        print 'WARNING: g:GeeknoteFormat=pre is deprecated.'
+
+    if format != 'vim-default' and format != 'pre':
+        return Editor.textToENML(content, True, format) 
 
     content = content.replace('<', '&lt;')
     content = content.replace('>', '&gt;')

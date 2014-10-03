@@ -32,24 +32,32 @@ Integrates Geeknote/Evernote into Vim.
 
 ## Optional Setup
 
-Quick toggle:
+### Quick toggle:
 
     noremap <F8> :Geeknote<cr>
 
-By default, regardless of whether you format your notes in plain-text or in
-markdown, the note content read back through Geeknote will not exactly match
-the content you specified. Often the differences are just in formatting but
-sometimes even the content itself may change. This is a result of the text
-conversion that Geeknote performs when reading/writing the note to the Evernote
-server. Unfortunately, Geeknote does not currently offer a way to work-around
-this issue which can be very annoying if you plan to create, edit, and view
-your notes in Vim. The following setting can be added to your .vimrc to work-
-around the issue from with this plugin itself. When set, the content of your
-notes will be saved exactly how it is specified when the note is saved. The
-only downside of this approach is your notes will be formatted in plain-text if
-you view from from Evernote.
+### Note format:
 
-    let g:GeeknoteFormat="pre"
+Use the option `g:GeeknoteFormat` to set the format mode used when saving notes
+to Geeknote. This is the equivalent of the `--format` options that Geeknote
+supports. E.g.:
+
+    let g:GeeknoteFormat="markdown"
+
+**Warning:** It is not advised that you use this option, use it at your own
+risk. The issue is that in the process of converting your notes from markdown
+to HTML and back, content is often reformatted. Worse is that if you edit and
+save a note that has been reformatted, there is even a large potential to lose
+content! This is a side-effect of the various tools/libs that Geeknote uses in
+performing the conversions. With the default settings, notes saved with vim-
+geeknote will bypass these format conversions. This means that notes will be
+saved exactly as they appear within Vim. It also means that the notes will
+appear in plain-text when viewed outside of Vim in Evernote. If you plan on
+creating, editing, and viewing your notes in Vim, this trade-off is well worth
+it. 
+
+And of course it does not mean that you cannot use the markdown format in your
+notes.
 
 ## Usage
 
