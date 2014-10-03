@@ -49,15 +49,13 @@ risk. The issue is that in the process of converting your notes from markdown
 to HTML and back, content is often reformatted. Worse is that if you edit and
 save a note that has been reformatted, there is even a large potential to lose
 content! This is a side-effect of the various tools/libs that Geeknote uses in
-performing the conversions. With the default settings, notes saved with vim-
-geeknote will bypass these format conversions. This means that notes will be
+performing the conversions. With the default settings, notes saved with
+vim-geeknote bypass these format conversions. This means that notes will be
 saved exactly as they appear within Vim. It also means that the notes will
 appear in plain-text when viewed outside of Vim in Evernote. If you plan on
 creating, editing, and viewing your notes in Vim, this trade-off is well worth
-it. 
-
-And of course it does not mean that you cannot use the markdown format in your
-notes.
+it. And of course it does not mean that you cannot use the markdown format in
+your notes.
 
 ## Usage
 
