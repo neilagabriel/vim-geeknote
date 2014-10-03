@@ -58,6 +58,14 @@ GeeknoteSaveAsNote()
 endOfPython
 endfunction
 
+function! Vim_GeeknotePrepareToSaveNote(arg1)
+python << endOfPython
+from vim_geeknote import GeeknotePrepareToSaveNote
+filename = vim.eval("a:arg1")
+GeeknotePrepareToSaveNote(filename)
+endOfPython
+endfunction
+
 function! Vim_GeeknoteSaveNote(arg1)
 python << endOfPython
 from vim_geeknote import GeeknoteSaveNote

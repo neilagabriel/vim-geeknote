@@ -189,9 +189,19 @@ def GeeknoteSaveAsNote():
 
     GeeknoteOpenNote(note, title, notebook)
 
+def GeeknotePrepareToSaveNote(filename):
+    path = os.path.abspath(filename)
+    for buffer in vim.buffers:
+        if buffer.name == path:
+            openNotes[filename]['modified'] = buffer.options['modified']
+            return
+
 def GeeknoteSaveNote(filename):
+    note = openNotes[filename]['note']
+    if openNotes[filename]['modified'] is False:
+        return note
+
     result    = False
-    note      = openNotes[filename]['note']
     title     = openNotes[filename]['title']
     notebook  = openNotes[filename]['notebook']
     origTitle = title
@@ -296,6 +306,9 @@ def GeeknoteOpenNote(note, title=None, notebook=None):
         # Position the cursor at a convenient location when opening a new note.
         if note is None:
             vim.current.window.cursor = (3, 0)
+
+        autocmd('BufWritePre', f.name, 
+            ':call Vim_GeeknotePrepareToSaveNote("{}")'.format(f.name))
 
         autocmd('BufWritePost', f.name, 
             ':call Vim_GeeknoteSaveNote("{}")'.format(f.name))
