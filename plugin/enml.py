@@ -14,14 +14,18 @@ def ENMLtoText(contentENML):
         print 'WARNING: g:GeeknoteFormat=pre is deprecated.'
 
     if format == 'vim-default' or format == 'pre':
-        soup = BeautifulSoup(contentENML.decode('utf-8'))
-        sections = soup.select('pre')
-        if len(sections) >= 1:
-            content = ''
-            for c in sections[0].contents:
-                content = u''.join((content, c))
-            content = re.sub(r' *\n', os.linesep, content)
-            return content.encode('utf-8')
+        try:
+            soup = BeautifulSoup(contentENML.decode('utf-8'))
+            sections = soup.select('pre')
+            if len(sections) >= 1:
+                content = ''
+                for c in sections[0].contents:
+                    content = u''.join((content, c))
+                content = re.sub(r' *\n', os.linesep, content)
+                return content.encode('utf-8')
+        except:
+            pass
+            # fall-through
     return Editor.ENMLtoText(contentENML)
 
 def textToENML(content):

@@ -330,7 +330,6 @@ def GeeknoteOpenNote(note, title=None, notebook=None):
 
 def GeeknoteToggle():
     global explorer
-    global geeknote
 
     if explorer.isHidden():
         explorer.show()
