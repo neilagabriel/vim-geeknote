@@ -152,6 +152,42 @@ class Explorer(object):
             self.render()
             vim.current.window.cursor = (row, col)
 
+    def addNotebook(self, notebook):
+        node = NotebookNode(notebook)
+        self.notebooks.append(node)
+        self.notebooks.sort(key=lambda n: n.notebook.name.lower())
+
+        self.guidMap[notebook.guid] = node
+
+        notes = self.getNotes(notebook)
+        notes.sort(key=lambda n: n.title)
+        for note in notes:
+            self.addNote(note)
+
+    def addNote(self, note):
+        notebook = self.guidMap[note.notebookGuid].notebook
+
+        node = NoteNode(note, notebook)
+        notebookNode = self.guidMap[notebook.guid]
+        notebookNode.children.append(node)
+
+        self.guidMap[note.guid] = node
+
+    def addTag(self, tag):
+        tagNode = TagNode(tag)
+
+        for notebookNode in self.notebooks:
+            for noteNode in notebookNode.children:
+                if noteNode.note.tagGuids is not None:
+                    if tag.guid in noteNode.note.tagGuids:
+                        tagNode.addChild(
+                            NoteNode(noteNode.note, noteNode.notebook))
+
+        self.tags.append(tagNode)
+        self.tags.sort(key=lambda t: t.tag.name.lower())
+
+        self.guidMap[tag.guid] = tagNode
+
     def applyChanges(self):
         if isBufferModified(self.buffer.number) is False:
             return
@@ -195,45 +231,9 @@ class Explorer(object):
                         self.modifiedNodes.append(node)
                 continue
 
-    def addNotebook(self, notebook):
-        node = NotebookNode(notebook)
-        self.notebooks.append(node)
-        self.notebooks.sort(key=lambda n: n.notebook.name.lower())
-
-        self.guidMap[notebook.guid] = node
-
-        notes = self.getNotes(notebook)
-        notes.sort(key=lambda n: n.title)
-        for note in notes:
-            self.addNote(note)
-
-    def addNote(self, note):
-        notebook = self.guidMap[note.notebookGuid].notebook
-
-        node = NoteNode(note, notebook)
-        notebookNode = self.guidMap[notebook.guid]
-        notebookNode.children.append(node)
-
-        self.guidMap[note.guid] = node
-
-    def addTag(self, tag):
-        tagNode = TagNode(tag)
-
-        for notebookNode in self.notebooks:
-            for noteNode in notebookNode.children:
-                if noteNode.note.tagGuids is not None:
-                    if tag.guid in noteNode.note.tagGuids:
-                        tagNode.addChild(
-                            NoteNode(noteNode.note, noteNode.notebook))
-
-        self.tags.append(tagNode)
-        self.tags.sort(key=lambda t: t.tag.name.lower())
-
-        self.guidMap[tag.guid] = tagNode
-
     #
     # Search upwards, starting at the given row number and return the first
-    # note node found. 
+    # note nodebook found. 
     #
     def findNotebookForNode(self, nodeRow):
         while nodeRow > 0:
@@ -243,6 +243,12 @@ class Explorer(object):
                 if isinstance(node, NotebookNode):
                     return node.notebook
             nodeRow -= 1
+        return None
+
+    def getContainingNotebook(self, guid):
+        node = self.guidMap[guid]
+        if isinstance(node, NoteNode):
+            return node.notebook
         return None
 
     #
@@ -276,12 +282,6 @@ class Explorer(object):
         for key, note in enumerate(result.notes):
             notes.append(note)
         return notes
-
-    def getContainingNotebook(self, guid):
-        node = self.guidMap[guid]
-        if isinstance(node, NoteNode):
-            return node.notebook
-        return None
 
     def getSelectedNotebook(self):
         if self.buffer is None:
@@ -402,43 +402,6 @@ class Explorer(object):
 
         return None
 
-    def selectNode(self, guid):
-        if self.buffer is None:
-            return
-
-        origWin = getActiveWindow()
-        setActiveBuffer(self.buffer)
-        node = self.guidMap[guid]
-        if node is not None:
-            vim.current.window.cursor = (node.row, 0)
-        setActiveWindow(origWin)
-
-    def selectNotebook(self, notebook):
-        self.selectNode(notebook.guid)
-
-    def selectNotebookIndex(self, index):
-        if index < len(self.notebooks):
-            node = self.notebooks[index]
-            self.selectNode(node.notebook.guid)
-
-    def selectNote(self, note):
-        self.selectNode(note.guid)
-
-    #
-    # Switch to the navigation buffer in the currently active window.
-    #
-    def show(self):
-        vim.command('topleft 50 vsplit {}'.format(self.dataFile.name))
-        self.buffer = vim.current.buffer
-
-        self.initView()
-        self.render()
-
-        noremap("<silent> <buffer> <cr>", 
-            ":call Vim_GeeknoteActivateNode()<cr>")
-
-        self.hidden = False
-
     # Render the navigation buffer in the navigation window..
     def render(self):
         if self.buffer is None:
@@ -487,6 +450,41 @@ class Explorer(object):
         vim.command('set ei={}'.format(ei))
 
         setActiveWindow(origWin)
+
+    def selectNode(self, guid):
+        if self.buffer is None:
+            return
+
+        origWin = getActiveWindow()
+        setActiveBuffer(self.buffer)
+        node = self.guidMap[guid]
+        if node is not None:
+            vim.current.window.cursor = (node.row, 0)
+        setActiveWindow(origWin)
+
+    def selectNote(self, note):
+        self.selectNode(note.guid)
+
+    def selectNotebook(self, notebook):
+        self.selectNode(notebook.guid)
+
+    def selectNotebookIndex(self, index):
+        if index < len(self.notebooks):
+            node = self.notebooks[index]
+            self.selectNode(node.notebook.guid)
+
+    # Switch to the navigation buffer in the currently active window.
+    def show(self):
+        vim.command('topleft 50 vsplit {}'.format(self.dataFile.name))
+        self.buffer = vim.current.buffer
+
+        self.initView()
+        self.render()
+
+        noremap("<silent> <buffer> <cr>", 
+            ":call Vim_GeeknoteActivateNode()<cr>")
+
+        self.hidden = False
 
     def syncChanges(self):
         self.applyChanges()
