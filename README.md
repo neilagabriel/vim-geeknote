@@ -81,9 +81,7 @@ Use `:GeeknoteCreateNote <name>` to create a new note. The note will be created
 in the notebook currently selected in the navigation window. If a notebook is
 not selected, the note will be created in the default notebook. A new buffer
 for the note will be displayed in the previous window if it is possible to do
-so or in a new vertical split. The note will not be created until the buffer is
-saved (e.g. `:w`). Once saved, the note will be created and the navigation
-window will update.
+so or in a new vertical split.
 
 Use `:GeeknoteSaveAsNote` to create a new note using the content of the current
 buffer. The first line in the buffer will be used as the note's title. The
