@@ -41,8 +41,19 @@ class NotebookNode(Node):
         super(NotebookNode, self).__init__()
 
         self.notebook = notebook
-        self.notes    = []
         self.setName(notebook.name)
+
+    def render(self, buffer):
+        numNotes = len(self.children)
+
+        line  = '-' if self.expanded or numNotes == 0 else '+'
+        line += ' ' + self.name
+        buffer.append('{:<50} [{}]'.format(line, self.notebook.guid))
+        self.row = len(buffer) + 1
+
+        if self.expanded:
+            for noteNode in self.children:
+                noteNode.render(buffer)
 
     def setName(self, name):
         self.name = name
@@ -55,6 +66,12 @@ class NoteNode(Node):
         self.notebook = notebook
         self.setTitle(note.title)
 
+    def render(self, buffer):
+        row  = len(buffer) + 1
+        line = '    {:<46} [{}]'.format(self.title, self.note.guid)
+        buffer.append(line)
+        self.row = row
+
     def setTitle(self, title):
         self.title = title
 
@@ -66,25 +83,16 @@ class TagNode(Node):
         self.setName(tag.name)
 
     def render(self, buffer):
-        row      = len(buffer) + 1
         numNotes = len(self.children)
 
         line  = '-' if self.expanded or numNotes == 0 else '+'
         line += ' ' + self.name
         buffer.append('{:<50} [{}]'.format(line, self.tag.guid))
-
-        self.row = row
-        row += 1
+        self.row = len(buffer) + 1
 
         if self.expanded:
             for noteNode in self.children:
-                note  = noteNode.note
-                title = noteNode.title
-
-                line  = '    {:<46} [{}]'.format(title, note.guid)
-                buffer.append(line)
-                noteNode.row = row
-                row += 1
+                noteNode.render(buffer)
 
 class Explorer(object):
     notebooks     = []
@@ -120,6 +128,8 @@ class Explorer(object):
         guid = m.group(1)
         node = self.guidMap[guid]
 
+        # XXX move everything that follows into a single activate() node class method
+        node.toggle()
         if isinstance(node, NotebookNode):
             notebook = node.notebook
             self.toggleNotebook(notebook.guid)
@@ -148,8 +158,6 @@ class Explorer(object):
             return
 
         if isinstance(node, TagNode):
-            node.toggle()
-
             # Rerender the navigation window. Keep the current cursor postion.
             row, col = vim.current.window.cursor
             self.render()
@@ -218,7 +226,7 @@ class Explorer(object):
 
         node = NoteNode(note, notebook)
         notebookNode = self.guidMap[notebook.guid]
-        notebookNode.notes.append(node)
+        notebookNode.children.append(node)
 
         self.guidMap[note.guid] = node
 
@@ -226,7 +234,7 @@ class Explorer(object):
         tagNode = TagNode(tag)
 
         for notebookNode in self.notebooks:
-            for noteNode in notebookNode.notes:
+            for noteNode in notebookNode.children:
                 if noteNode.note.tagGuids is not None:
                     if tag.guid in noteNode.note.tagGuids:
                         tagNode.addChild(
@@ -464,7 +472,7 @@ class Explorer(object):
     def selectNote(self, note):
         self.selectNode(note.guid)
 
-    def toggleNotebook(self, guid):
+    def toggleNotebook(self, guid): # XXX remove this
         node = self.guidMap[guid]
         if isinstance(node, NotebookNode):
             if self.expandState[guid] is True:
@@ -510,40 +518,13 @@ class Explorer(object):
         content.append('Notebooks:')
         content.append('{:=^90}'.format('='))
 
-        #
-        # Render notebooks and notes
-        #
-
-        row = 3
+        # Render notebooks, notes, and tags
         for node in self.notebooks:
-            notebook = node.notebook
-            numNotes = self.getNoteCount(notebook)
-            expand   = self.expandState[notebook.guid]
+            node.render(content)
 
-            line  = '-' if expand is True or numNotes == 0 else '+'
-            line += ' ' + node.name
-            content.append('{:<50} [{}]'.format(line, notebook.guid))
-            node.row = row
-            row += 1
-
-            if expand is True:
-                for noteNode in node.notes:
-                    note  = noteNode.note
-                    title = noteNode.title
-
-                    line  = '    {:<46} [{}]'.format(title, note.guid)
-                    content.append(line)
-                    noteNode.row = row
-                    row += 1
         content.append('')
-        row += 1
-
-        #
-        # Render tags
-        #
         content.append('Tags:')
         content.append('{:=^90}'.format('='))
-        row += 2
 
         for node in self.tags:
             node.render(content)
