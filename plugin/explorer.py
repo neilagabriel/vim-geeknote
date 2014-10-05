@@ -7,35 +7,19 @@ from utils import *
 
 from geeknote.geeknote import *
 
+import evernote.edam.limits.constants as Limits
+
 #======================== Classes ============================================#
 
 class Node(object):
-    guid = None
-    row  = -1
-
-class NotebookNode(Node):
-    def __init__(self, notebook):
-        self.notebook = notebook
-        self.notes    = []
-        self.setName(notebook.name)
-
-    def setName(self, name):
-        self.name = name
-
-class NoteNode(Node):
-    def __init__(self, note, notebook):
-        self.note     = note
-        self.notebook = notebook
-        self.setTitle(note.title)
-
-    def setTitle(self, title):
-        self.title = title
-
-class TagNode(Node):
-    def __init__(self, tag):
-        self.tag = tag
-        self.setName(tag.name)
+    def __init__(self):
+        self.children = []
+        self.guid     = None
+        self.row      = -1
         self.close()
+
+    def addChild(self, node):
+        self.children.append(node)
 
     def close(self):
         self.expanded = False
@@ -51,6 +35,56 @@ class TagNode(Node):
             self.close()
         else:
             self.expand()
+
+class NotebookNode(Node):
+    def __init__(self, notebook):
+        super(NotebookNode, self).__init__()
+
+        self.notebook = notebook
+        self.notes    = []
+        self.setName(notebook.name)
+
+    def setName(self, name):
+        self.name = name
+
+class NoteNode(Node):
+    def __init__(self, note, notebook):
+        super(NoteNode, self).__init__()
+
+        self.note     = note
+        self.notebook = notebook
+        self.setTitle(note.title)
+
+    def setTitle(self, title):
+        self.title = title
+
+class TagNode(Node):
+    def __init__(self, tag):
+        super(TagNode, self).__init__()
+
+        self.tag = tag
+        self.setName(tag.name)
+
+    def render(self, buffer):
+        row      = len(buffer) + 1
+        numNotes = len(self.children)
+
+        line  = '-' if self.expanded or numNotes == 0 else '+'
+        line += ' ' + self.name
+        buffer.append('{:<50} [{}]'.format(line, self.tag.guid))
+
+        self.row = row
+        row += 1
+
+        if self.expanded:
+            for noteNode in self.children:
+                note  = noteNode.note
+                title = noteNode.title
+
+                line  = '    {:<46} [{}]'.format(title, note.guid)
+                buffer.append(line)
+                noteNode.row = row
+                row += 1
 
 class Explorer(object):
     notebooks     = []
@@ -115,6 +149,11 @@ class Explorer(object):
 
         if isinstance(node, TagNode):
             node.toggle()
+
+            # Rerender the navigation window. Keep the current cursor postion.
+            row, col = vim.current.window.cursor
+            self.render()
+            vim.current.window.cursor = (row, col)
 
     def applyChanges(self):
         if isBufferModified(self.buffer.number) is False:
@@ -184,11 +223,19 @@ class Explorer(object):
         self.guidMap[note.guid] = node
 
     def addTag(self, tag):
-        node = TagNode(tag)
-        self.tags.append(node)
+        tagNode = TagNode(tag)
+
+        for notebookNode in self.notebooks:
+            for noteNode in notebookNode.notes:
+                if noteNode.note.tagGuids is not None:
+                    if tag.guid in noteNode.note.tagGuids:
+                        tagNode.addChild(
+                            NoteNode(noteNode.note, noteNode.notebook))
+
+        self.tags.append(tagNode)
         self.tags.sort(key=lambda t: t.tag.name.lower())
 
-        self.guidMap[tag.guid] = node
+        self.guidMap[tag.guid] = tagNode
 
     def closeAll(self):
         for guid in self.expandState:
@@ -242,17 +289,27 @@ class Explorer(object):
     # Return a list of all notes contained in the given notebook.
     #
     def getNotes(self, notebook):
-        request = 'notebook:"%s" ' % notebook.name
-        count   = 20
+        # Ask for notes in the order in which they created.
+        filter = NoteStore.NoteFilter(order = Types.NoteSortOrder.CREATED)
+        filter.words = 'notebook:"%s" ' % notebook.name
 
-        result = self.geeknote.findNotes(request, count, False)
+        # Ask for the title, notebook, and tags, for each note.
+        meta = NoteStore.NotesMetadataResultSpec()
+        meta.includeTitle        = True
+        meta.includeNotebookGuid = True
+        meta.includeTagGuids     = True
+
+        count  = Limits.EDAM_USER_NOTES_MAX
+        result = noteStore.findNotesMetadata(authToken, filter, 0, count, meta)
         update_count = lambda c: max(c - len(result.notes), 0)
         count = update_count(count)
         
         while ((result.totalNotes != len(result.notes)) and count != 0):
             offset = len(result.notes)
-            result.notes += self.geeknote.findNotes(request, count,
-                    False, offset).notes
+
+            result.notes = noteStore.findNotesMetadata(
+                authToken, filter, offset, count, meta)
+
             count = update_count(count)
 
         notes = []
@@ -489,10 +546,7 @@ class Explorer(object):
         row += 2
 
         for node in self.tags:
-            line  = '{:<50} [{}]'.format(node.name, node.tag.guid)
-            content.append(line)
-            node.row = row
-            row += 1
+            node.render(content)
 
         # Write the content list to the buffer starting at row zero.
         self.buffer.append(content, 0)

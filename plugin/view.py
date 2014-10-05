@@ -113,7 +113,6 @@ def GeeknoteOpenNote(note):
         
         isNoteEmpty = not content.strip()
         if isNoteEmpty is False:
-            print "'%s'" % note.content
             f.write(content)
         else:
             f.write("<add content here>\n")
