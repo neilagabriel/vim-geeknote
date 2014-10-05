@@ -2,7 +2,9 @@ import vim
 import re
 import tempfile
 
+from view  import *
 from utils import *
+
 from geeknote.geeknote import *
 
 #======================== Classes ============================================#
@@ -29,8 +31,30 @@ class NoteNode(Node):
     def setTitle(self, title):
         self.title = title
 
+class TagNode(Node):
+    def __init__(self, tag):
+        self.tag = tag
+        self.setName(tag.name)
+        self.close()
+
+    def close(self):
+        self.expanded = False
+
+    def expand(self):
+        self.expanded = True
+
+    def setName(self, name):
+        self.name = name
+
+    def toggle(self):
+        if self.expanded:
+            self.close()
+        else:
+            self.expand()
+
 class Explorer(object):
     notebooks     = []
+    tags          = []
     guidMap       = {}
     expandState   = {}
     modifiedNodes = []
@@ -53,6 +77,44 @@ class Explorer(object):
             self.dataFile.close()
         except:
             pass
+
+    def activateNode(self, line):
+        r = re.compile('^.+\[(.+)\]$')
+        m = r.match(line)
+        if not m: return
+
+        guid = m.group(1)
+        node = self.guidMap[guid]
+
+        if isinstance(node, NotebookNode):
+            notebook = node.notebook
+            self.toggleNotebook(notebook.guid)
+
+            # Rerender the navigation window. Keep the current cursor postion.
+            row, col = vim.current.window.cursor
+            self.render()
+            vim.current.window.cursor = (row, col)
+            return
+         
+        if isinstance(node, NoteNode):
+            # TODO: move all of this into view.py
+            origWin        = getActiveWindow()
+            prevWin        = getPreviousWindow()
+            firstUsableWin = getFirstUsableWindow()
+            isPrevUsable   = isWindowUsable(prevWin)
+            
+            setActiveWindow(prevWin)
+            if (isPrevUsable is False) and (firstUsableWin == -1):
+                vim.command('botright vertical new')
+            elif isPrevUsable is False:
+                setActiveWindow(firstUsableWin)
+
+            GeeknoteOpenNote(node.note)
+            setActiveWindow(origWin)
+            return
+
+        if isinstance(node, TagNode):
+            node.toggle()
 
     def applyChanges(self):
         if isBufferModified(self.buffer.number) is False:
@@ -107,17 +169,26 @@ class Explorer(object):
         notes = self.getNotes(notebook)
         notes.sort(key=lambda n: n.title)
         for note in notes:
-            self.addNote(note, notebook)
+            self.addNote(note)
 
         if notebook.guid not in self.expandState:
             self.expandState[notebook.guid] = False
 
-    def addNote(self, note, notebook):
+    def addNote(self, note):
+        notebook = self.guidMap[note.notebookGuid].notebook
+
         node = NoteNode(note, notebook)
         notebookNode = self.guidMap[notebook.guid]
         notebookNode.notes.append(node)
 
         self.guidMap[note.guid] = node
+
+    def addTag(self, tag):
+        node = TagNode(tag)
+        self.tags.append(node)
+        self.tags.sort(key=lambda t: t.tag.name.lower())
+
+        self.guidMap[tag.guid] = node
 
     def closeAll(self):
         for guid in self.expandState:
@@ -274,6 +345,10 @@ class Explorer(object):
         for notebook in notebooks:
             self.addNotebook(notebook)
 
+        tags = self.noteStore.listTags(self.authToken)
+        for tag in tags:
+            self.addTag(tag)
+
     def renameNotebook(self, notebook, name):
         notebook.name = name
         try:
@@ -378,6 +453,10 @@ class Explorer(object):
         content.append('Notebooks:')
         content.append('{:=^90}'.format('='))
 
+        #
+        # Render notebooks and notes
+        #
+
         row = 3
         for node in self.notebooks:
             notebook = node.notebook
@@ -399,6 +478,23 @@ class Explorer(object):
                     content.append(line)
                     noteNode.row = row
                     row += 1
+        content.append('')
+        row += 1
+
+        #
+        # Render tags
+        #
+        content.append('Tags:')
+        content.append('{:=^90}'.format('='))
+        row += 2
+
+        for node in self.tags:
+            line  = '{:<50} [{}]'.format(node.name, node.tag.guid)
+            content.append(line)
+            node.row = row
+            row += 1
+
+        # Write the content list to the buffer starting at row zero.
         self.buffer.append(content, 0)
 
         #
