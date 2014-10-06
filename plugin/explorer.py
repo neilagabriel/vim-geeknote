@@ -136,6 +136,10 @@ class TagNode(Node):
 
         line  = '-' if self.expanded or numNotes == 0 else '+'
         line += ' ' + self.name
+
+        if numNotes != 0:
+            line += ' (%d)' % numNotes
+
         buffer.append('{:<50} [{}]'.format(line, self.tag.guid))
         self.row = len(buffer)
 
