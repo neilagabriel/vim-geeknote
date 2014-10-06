@@ -9,13 +9,19 @@ from geeknote.geeknote import *
 
 import evernote.edam.limits.constants as Limits
 
+# Connection to Geeknote (XXX: move this out)
+geeknote  = GeekNote()
+authToken = geeknote.authToken
+noteStore = geeknote.getNoteStore()
+
 #======================== Classes ============================================#
 
 class Node(object):
-    def __init__(self):
+    def __init__(self, indent=0):
         self.children = []
         self.guid     = None
         self.row      = -1
+        self.indent   = indent
         self.close()
 
     def activate(self):
@@ -26,6 +32,9 @@ class Node(object):
 
     def close(self):
         self.expanded = False
+
+    def commitChanges(self):
+        pass
 
     def expand(self):
         self.expanded = True
@@ -46,13 +55,18 @@ class NotebookNode(Node):
         self.notebook = notebook
         self.setName(notebook.name)
 
+    def commitChanges(self):
+        if self.notebook.name != self.name:
+            self.notebook.name = self.name
+            noteStore.updateNotebook(authToken, self.notebook)
+
     def render(self, buffer):
         numNotes = len(self.children)
 
         line  = '-' if self.expanded or numNotes == 0 else '+'
         line += ' ' + self.name
         buffer.append('{:<50} [{}]'.format(line, self.notebook.guid))
-        self.row = len(buffer) + 1
+        self.row = len(buffer)
 
         if self.expanded:
             for noteNode in self.children:
@@ -62,8 +76,8 @@ class NotebookNode(Node):
         self.name = name
 
 class NoteNode(Node):
-    def __init__(self, note, notebook):
-        super(NoteNode, self).__init__()
+    def __init__(self, note, notebook, indent=1):
+        super(NoteNode, self).__init__(indent)
 
         self.note     = note
         self.notebook = notebook
@@ -88,21 +102,34 @@ class NoteNode(Node):
         setActiveWindow(origWin)
         return
 
+    def commitChanges(self):
+        if self.note.title != self.title:
+            self.note.title = self.title
+            noteStore.updateNote(authToken, self.note)
+
+        if self.note.notebookGuid != self.notebook.guid:
+            self.note.notebookGuid = self.notebook.guid
+            noteStore.updateNote(authToken, self.note)
+
     def render(self, buffer):
-        row  = len(buffer) + 1
-        line = '    {:<46} [{}]'.format(self.title, self.note.guid)
+        line  = ' ' * (self.indent * 4)
+        line += '{:<46} [{}]'.format(self.title, self.note.guid)
         buffer.append(line)
-        self.row = row
+        self.row = len(buffer)
 
     def setTitle(self, title):
         self.title = title
 
 class TagNode(Node):
-    def __init__(self, tag):
-        super(TagNode, self).__init__()
+    def __init__(self, tag, indent=0):
+        super(TagNode, self).__init__(indent)
 
         self.tag = tag
         self.setName(tag.name)
+
+    def addNote(self, note, notebook):
+        node = NoteNode(note, notebook, self.indent + 1)
+        self.addChild(node)
 
     def render(self, buffer):
         numNotes = len(self.children)
@@ -110,25 +137,22 @@ class TagNode(Node):
         line  = '-' if self.expanded or numNotes == 0 else '+'
         line += ' ' + self.name
         buffer.append('{:<50} [{}]'.format(line, self.tag.guid))
-        self.row = len(buffer) + 1
+        self.row = len(buffer)
 
         if self.expanded:
             for noteNode in self.children:
                 noteNode.render(buffer)
 
 class Explorer(object):
-    notebooks     = []
-    tags          = []
-    guidMap       = {}
-    modifiedNodes = []
-    dataFile      = None
-    buffer        = None
-
-    def __init__(self, geeknote):
-        self.geeknote  = geeknote
-        self.noteStore = self.geeknote.getNoteStore()
-        self.authToken = self.geeknote.authToken
-        self.hidden    = True
+    def __init__(self):
+        self.hidden        = True
+        self.selectedNode  = None
+        self.notebooks     = []
+        self.tags          = []
+        self.guidMap       = {}
+        self.modifiedNodes = []
+        self.dataFile      = None
+        self.buffer        = None
 
         self.refresh()
 
@@ -180,8 +204,7 @@ class Explorer(object):
             for noteNode in notebookNode.children:
                 if noteNode.note.tagGuids is not None:
                     if tag.guid in noteNode.note.tagGuids:
-                        tagNode.addChild(
-                            NoteNode(noteNode.note, noteNode.notebook))
+                        tagNode.addNote(noteNode.note, noteNode.notebook)
 
         self.tags.append(tagNode)
         self.tags.sort(key=lambda t: t.tag.name.lower())
@@ -230,6 +253,12 @@ class Explorer(object):
                         node.setName(name)
                         self.modifiedNodes.append(node)
                 continue
+
+    def commitChanges(self):
+        self.applyChanges()
+        for node in self.modifiedNodes:
+            node.commitChanges()
+        del self.modifiedNodes[:]
 
     #
     # Search upwards, starting at the given row number and return the first
@@ -340,67 +369,24 @@ class Explorer(object):
     def isHidden(self):
         return self.hidden
 
-    #
-    # Move the given note into the specified notebook.
-    #
-    def moveNote(self, note, notebook):
-        note.notebookGuid = notebook.guid
-        try:
-            return self.noteStore.updateNote(self.authToken, note)
-        except:
-            vim.command('echoerr "Failed to move note."')
-        return None
-
     def refresh(self):
         del self.notebooks[:]
+        del self.tags[:]
         self.guidMap.clear()
 
-        self.noteCounts = self.noteStore.findNoteCounts(
-            self.authToken, NoteStore.NoteFilter(), False)
+        self.noteCounts = noteStore.findNoteCounts(
+            authToken, NoteStore.NoteFilter(), False)
 
         notebooks = GeekNote().findNotebooks()
         for notebook in notebooks:
             self.addNotebook(notebook)
 
-        tags = self.noteStore.listTags(self.authToken)
+        notebook = noteStore.getDefaultNotebook(authToken)
+        self.selectNotebook(notebook)
+
+        tags = noteStore.listTags(authToken)
         for tag in tags:
             self.addTag(tag)
-
-    def renameNotebook(self, notebook, name):
-        notebook.name = name
-        try:
-            return self.noteStore.updateNotebook(self.authToken, notebook)
-
-        except Errors.EDAMUserException as e:
-            vim.command('echoerr "%s"' % e.string)
-
-        except Errors.EDAMSystemException as e:
-            vim.command('echoerr "Error %d: %s"' % \
-                (e.errorCode, e.string))
-
-        except Errors.EDAMNotFoundException as e:
-            vim.command('echoerr "Error: not found %s (type=%s)"' % \
-                (e.key, e.identifier))
-
-        return None
-
-    def renameNote(self, note, title):
-        note.title = title
-        try:
-            return self.noteStore.updateNote(self.authToken, note)
-
-        except Errors.EDAMUserException as e:
-            vim.command('echoerr "%s"' % e.string)
-
-        except Errors.EDAMSystemException as e:
-            vim.command('echoerr "Error %d: %s"' % \
-                (e.errorCode, e.string))
-
-        except Errors.EDAMNotFoundException as e:
-            vim.command('echoerr "Error: not found %s (type=%s)"' % \
-                (e.key, e.identifier))
-
-        return None
 
     # Render the navigation buffer in the navigation window..
     def render(self):
@@ -439,6 +425,11 @@ class Explorer(object):
         # Write the content list to the buffer starting at row zero.
         self.buffer.append(content, 0)
 
+        # Move the cursor over the selected node (if any)
+        if self.selectedNode is not None:
+            if self.selectedNode.row != -1:
+                vim.current.window.cursor = (self.selectedNode.row, 0)
+
         #
         # Write the navigation window but disable BufWritePre events before
         # doing so. We only want to check for user changes when the user was
@@ -452,17 +443,19 @@ class Explorer(object):
         setActiveWindow(origWin)
 
     def selectNode(self, guid):
-        if self.buffer is None:
-            return
-
-        origWin = getActiveWindow()
-        setActiveBuffer(self.buffer)
         node = self.guidMap[guid]
-        if node is not None:
+        self.selectedNode = node
+
+        # Move the cursor over the node if the node has been rendered.
+        if node.row != -1:
+            origWin = getActiveWindow()
+            setActiveBuffer(self.buffer)
             vim.current.window.cursor = (node.row, 0)
-        setActiveWindow(origWin)
+            setActiveWindow(origWin)
 
     def selectNote(self, note):
+        notebook = self.guidMap[note.notebookGuid]
+        notebook.expand()
         self.selectNode(note.guid)
 
     def selectNotebook(self, notebook):
@@ -485,18 +478,4 @@ class Explorer(object):
             ":call Vim_GeeknoteActivateNode()<cr>")
 
         self.hidden = False
-
-    def syncChanges(self):
-        self.applyChanges()
-        for node in self.modifiedNodes:
-             if isinstance(node, NotebookNode):
-                 self.renameNotebook(node.notebook, node.name)
-                 continue
-             if isinstance(node, NoteNode):
-                 if node.title != node.note.title:
-                     self.renameNote(node.note, node.title)
-                 if node.notebook.guid != node.note.notebookGuid:
-                     self.moveNote(node.note, node.notebook)
-                 continue
-        del self.modifiedNodes[:]
 

@@ -33,7 +33,7 @@ import evernote.edam.error.ttypes as Errors
 geeknote  = GeekNote()
 authToken = geeknote.authToken
 noteStore = geeknote.getNoteStore()
-explorer  = Explorer(geeknote)
+explorer  = Explorer()
 
 #======================== Geeknote Functions  ================================#
 
@@ -79,21 +79,19 @@ def GeeknoteCreateNote(title):
 
     # Add the note to the navigation window.
     explorer.addNote(note)
-    explorer.expandNotebook(note.notebookGuid)
-    explorer.render()
     explorer.selectNote(note)
+    explorer.render()
 
 def GeeknoteCreateNotebook(name):
     name = name.strip('"\'')
     try:
         notebook = Notebooks().create(name)
-        explorer.addNotebook(notebook)
     except:
         vim.command('echoerr "Failed to create notebook."')
-        return
 
-    explorer.render()
+    explorer.addNotebook(notebook)
     explorer.selectNotebook(notebook)
+    explorer.render()
 
 def GeeknoteGetDefaultNotebook():
     try:
@@ -163,9 +161,8 @@ def GeeknoteSaveAsNote():
         return
 
     explorer.addNote(note)
-    explorer.expandNotebook(notebook.guid)
-    explorer.render()
     explorer.selectNote(note)
+    explorer.render()
 
     GeeknoteOpenNote(note, title, notebook)
 
@@ -190,7 +187,7 @@ def GeeknoteHandleNoteSaveFailure(note, e):
     vim.command('echoerr "%s"' % msg)
 
 def GeeknoteSync():
-    explorer.syncChanges()
+    explorer.commitChanges()
     explorer.refresh()    
     explorer.render()
 
