@@ -164,7 +164,7 @@ def GeeknoteSaveAsNote():
     explorer.selectNote(note)
     explorer.render()
 
-    GeeknoteOpenNote(note, title, notebook)
+    GeeknoteOpenNote(note)
 
 def GeeknoteSaveNote(filename):
     note    = GeeknoteGetOpenNote(filename)

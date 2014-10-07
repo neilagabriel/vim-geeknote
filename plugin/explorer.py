@@ -459,8 +459,6 @@ class Explorer(object):
                     node.expand()
                 else:
                     node.close()
-            else:
-                del self.expandState[guid]
 
     def saveExpandState(self):
         for node in self.notebooks:
