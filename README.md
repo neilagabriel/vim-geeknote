@@ -12,9 +12,10 @@ Integrates Geeknote/Evernote into Vim.
 
 ![img](https://github.com/neilagabriel/vim-geeknote/blob/master/img/explorer.png)
 
-## Dependencies
+## Dependencies/Requirements
 
 - Vim 7.4.364 or newer (issues observed with earlier versions)
+- Linux (not tested on operating systems)
 
 ## Installation
 
