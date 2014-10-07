@@ -19,7 +19,6 @@ noteStore = geeknote.getNoteStore()
 class Node(object):
     def __init__(self, indent=0):
         self.children = []
-        self.guid     = None
         self.row      = -1
         self.indent   = indent
         self.close()
@@ -157,6 +156,7 @@ class Explorer(object):
         self.modifiedNodes = []
         self.dataFile      = None
         self.buffer        = None
+        self.expandState   = {}
 
         self.refresh()
 
@@ -374,6 +374,8 @@ class Explorer(object):
         return self.hidden
 
     def refresh(self):
+        self.saveExpandState()
+
         del self.notebooks[:]
         del self.tags[:]
         self.guidMap.clear()
@@ -385,12 +387,15 @@ class Explorer(object):
         for notebook in notebooks:
             self.addNotebook(notebook)
 
-        notebook = noteStore.getDefaultNotebook(authToken)
-        self.selectNotebook(notebook)
-
         tags = noteStore.listTags(authToken)
         for tag in tags:
             self.addTag(tag)
+
+        self.restoreExpandState()
+
+        if self.selectedNode is None:
+            notebook = noteStore.getDefaultNotebook(authToken)
+            self.selectNotebook(notebook)
 
     # Render the navigation buffer in the navigation window..
     def render(self):
@@ -445,6 +450,24 @@ class Explorer(object):
         vim.command('set ei={}'.format(ei))
 
         setActiveWindow(origWin)
+
+    def restoreExpandState(self):
+        for guid in self.expandState:
+            if guid in self.guidMap:
+                node = self.guidMap[guid]
+                if self.expandState[guid]:
+                    node.expand()
+                else:
+                    node.close()
+            else:
+                del self.expandState[guid]
+
+    def saveExpandState(self):
+        for node in self.notebooks:
+            self.expandState[node.notebook.guid] = node.expanded
+
+        for node in self.tags:
+            self.expandState[node.tag.guid] = node.expanded
 
     def selectNode(self, guid):
         node = self.guidMap[guid]
