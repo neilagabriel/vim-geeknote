@@ -14,6 +14,12 @@ geeknote  = GeekNote()
 authToken = geeknote.authToken
 noteStore = geeknote.getNoteStore()
 
+#
+# A dictionary containing an entry for all nodes contained in the explorer
+# window, keyed by guid.
+#
+registry = {}
+
 #======================== Classes ============================================#
 
 class Node(object):
@@ -152,7 +158,6 @@ class Explorer(object):
         self.selectedNode  = None
         self.notebooks     = []
         self.tags          = []
-        self.guidMap       = {}
         self.modifiedNodes = []
         self.dataFile      = None
         self.buffer        = None
@@ -172,7 +177,7 @@ class Explorer(object):
     def activateNode(self, line):
         guid = self.getNodeGuid(line)
         if guid is not None:
-            node = self.guidMap[guid]
+            node = registry[guid]
             node.activate()
 
             # Rerender the navigation window. Keep the current cursor postion.
@@ -185,7 +190,7 @@ class Explorer(object):
         self.notebooks.append(node)
         self.notebooks.sort(key=lambda n: n.notebook.name.lower())
 
-        self.guidMap[notebook.guid] = node
+        registry[notebook.guid] = node
 
         notes = self.getNotes(notebook)
         notes.sort(key=lambda n: n.title)
@@ -193,13 +198,13 @@ class Explorer(object):
             self.addNote(note)
 
     def addNote(self, note):
-        notebook = self.guidMap[note.notebookGuid].notebook
+        notebook = registry[note.notebookGuid].notebook
 
         node = NoteNode(note, notebook)
-        notebookNode = self.guidMap[notebook.guid]
+        notebookNode = registry[notebook.guid]
         notebookNode.children.append(node)
 
-        self.guidMap[note.guid] = node
+        registry[note.guid] = node
 
     def addTag(self, tag):
         tagNode = TagNode(tag)
@@ -213,7 +218,7 @@ class Explorer(object):
         self.tags.append(tagNode)
         self.tags.sort(key=lambda t: t.tag.name.lower())
 
-        self.guidMap[tag.guid] = tagNode
+        registry[tag.guid] = tagNode
 
     def applyChanges(self):
         if isBufferModified(self.buffer.number) is False:
@@ -228,7 +233,7 @@ class Explorer(object):
             if m: 
                 title = m.group(1).strip()
                 guid  = m.group(2)
-                node  = self.guidMap[guid]
+                node  = registry[guid]
                 if isinstance(node, NoteNode):
                     # Did the user change the note's title?
                     if title != node.title:
@@ -251,7 +256,7 @@ class Explorer(object):
             if m:
                 name = m.group(1).strip()
                 guid = m.group(2)
-                node = self.guidMap[guid]
+                node = registry[guid]
                 if isinstance(node, NotebookNode):
                     if name != node.name:
                         node.setName(name)
@@ -272,14 +277,14 @@ class Explorer(object):
         while nodeRow > 0:
             guid = self.getNodeGuid(self.buffer[nodeRow])
             if guid is not None: 
-                node = self.guidMap[guid]
+                node = registry[guid]
                 if isinstance(node, NotebookNode):
                     return node.notebook
             nodeRow -= 1
         return None
 
     def getContainingNotebook(self, guid):
-        node = self.guidMap[guid]
+        node = registry[guid]
         if isinstance(node, NoteNode):
             return node.notebook
         return None
@@ -327,7 +332,7 @@ class Explorer(object):
 
         guid = self.getNodeGuid(text)
         if guid is not None:
-            node = self.guidMap[guid]
+            node = registry[guid]
             if isinstance(node, NotebookNode):
                 return node.notebook
             if isinstance(node, NoteNode):
@@ -378,7 +383,7 @@ class Explorer(object):
 
         del self.notebooks[:]
         del self.tags[:]
-        self.guidMap.clear()
+        registry.clear()
 
         self.noteCounts = noteStore.findNoteCounts(
             authToken, NoteStore.NoteFilter(), False)
@@ -453,8 +458,8 @@ class Explorer(object):
 
     def restoreExpandState(self):
         for guid in self.expandState:
-            if guid in self.guidMap:
-                node = self.guidMap[guid]
+            if guid in registry:
+                node = registry[guid]
                 if self.expandState[guid]:
                     node.expand()
                 else:
@@ -468,7 +473,7 @@ class Explorer(object):
             self.expandState[node.tag.guid] = node.expanded
 
     def selectNode(self, guid):
-        node = self.guidMap[guid]
+        node = registry[guid]
         self.selectedNode = node
 
         # Move the cursor over the node if the node has been rendered.
@@ -479,7 +484,7 @@ class Explorer(object):
             setActiveWindow(origWin)
 
     def selectNote(self, note):
-        notebook = self.guidMap[note.notebookGuid]
+        notebook = registry[note.notebookGuid]
         notebook.expand()
         self.selectNode(note.guid)
 
