@@ -4,15 +4,7 @@ import tempfile
 
 from view  import *
 from utils import *
-
-from geeknote.geeknote import *
-
-import evernote.edam.limits.constants as Limits
-
-# Connection to Geeknote (XXX: move this out)
-geeknote  = GeekNote()
-authToken = geeknote.authToken
-noteStore = geeknote.getNoteStore()
+from conn  import *
 
 #
 # A dictionary containing an entry for all nodes contained in the explorer
@@ -78,13 +70,13 @@ class NotebookNode(Node):
     def commitChanges(self):
         if self.notebook.name != self.name:
             self.notebook.name = self.name
-            noteStore.updateNotebook(authToken, self.notebook)
+            GeeknoteUpdateNotebook(self.notebook)
 
     def expand(self):
         if self.loaded is False:
             del self.children[:]
 
-            notes = self.loadNotes()
+            notes = self.getNotes()
             notes.sort(key=lambda n: n.title)
 
             for note in notes:
@@ -93,34 +85,9 @@ class NotebookNode(Node):
 
         super(NotebookNode, self).expand()
 
-    # Return a list of all notes contained in this notebook.
-    def loadNotes(self):
-        # Ask for notes in the order in which they created.
-        filter = NoteStore.NoteFilter(order = Types.NoteSortOrder.CREATED)
-        filter.words = 'notebook:"%s" ' % self.notebook.name
-
-        # Ask for the title, notebook, and tags, for each note.
-        meta = NoteStore.NotesMetadataResultSpec()
-        meta.includeTitle        = True
-        meta.includeNotebookGuid = True
-        meta.includeTagGuids     = True
-
-        count  = Limits.EDAM_USER_NOTES_MAX
-        result = noteStore.findNotesMetadata(authToken, filter, 0, count, meta)
-        update_count = lambda c: max(c - len(result.notes), 0)
-        count = update_count(count)
-        
-        while ((result.totalNotes != len(result.notes)) and count != 0):
-            offset = len(result.notes)
-            result.notes = noteStore.findNotesMetadata(
-                authToken, filter, offset, count, meta)
-            count = update_count(count)
-
-        notes = []
-        for key, note in enumerate(result.notes):
-            notes.append(note)
-
-        return notes
+    def getNotes(self):
+        searchWords = 'notebook:"%s"' % self.notebook.name
+        return GeeknoteGetNotes(searchWords)
 
     def render(self, buffer):
         numNotes = len(self.children)
@@ -176,11 +143,11 @@ class NoteNode(Node):
     def commitChanges(self):
         if self.note.title != self.title:
             self.note.title = self.title
-            noteStore.updateNote(authToken, self.note)
+            GeeknoteUpdateNote(self.note)
 
         if self.note.notebookGuid != self.notebook.guid:
             self.note.notebookGuid = self.notebook.guid
-            noteStore.updateNote(authToken, self.note)
+            GeeknoteUpdateNote(self.note)
 
     def render(self, buffer):
         line  = ' ' * (self.indent * 4)
@@ -212,7 +179,7 @@ class TagNode(Node):
 
     def expand(self):
         if self.loaded is False:
-            notes = self.loadNotes()
+            notes = self.getNotes()
             notes.sort(key=lambda n: n.title)
             for note in notes:
                 self.addNote(note)
@@ -220,34 +187,9 @@ class TagNode(Node):
 
         super(TagNode, self).expand()
 
-    # Return a list of all notes assoicated with this tag
-    def loadNotes(self):
-        # Ask for notes in the order in which they created.
-        filter = NoteStore.NoteFilter(order = Types.NoteSortOrder.CREATED)
-        filter.words = 'tag:"%s" ' % self.tag.name
-
-        # Ask for the title, notebook, and tags, for each note.
-        meta = NoteStore.NotesMetadataResultSpec()
-        meta.includeTitle        = True
-        meta.includeNotebookGuid = True
-        meta.includeTagGuids     = True
-
-        count  = Limits.EDAM_USER_NOTES_MAX
-        result = noteStore.findNotesMetadata(authToken, filter, 0, count, meta)
-        update_count = lambda c: max(c - len(result.notes), 0)
-        count = update_count(count)
-        
-        while ((result.totalNotes != len(result.notes)) and count != 0):
-            offset = len(result.notes)
-            result.notes = noteStore.findNotesMetadata(
-                authToken, filter, offset, count, meta)
-            count = update_count(count)
-
-        notes = []
-        for key, note in enumerate(result.notes):
-            notes.append(note)
-
-        return notes
+    def getNotes(self):
+        searchWords = 'tag:"%s"' % self.tag.name
+        return GeeknoteGetNotes(searchWords)
 
     def render(self, buffer):
         numNotes = len(self.children)
@@ -474,21 +416,20 @@ class Explorer(object):
 
         registry.clear()
 
-        self.noteCounts = noteStore.findNoteCounts(
-            authToken, NoteStore.NoteFilter(), False)
+        self.noteCounts = GeeknoteFindNoteCounts()
 
-        notebooks = GeekNote().findNotebooks()
+        notebooks = GeeknoteGetNotebooks()
         for notebook in notebooks:
             self.addNotebook(notebook)
 
-        tags = noteStore.listTags(authToken)
+        tags = GeeknoteGetTags()
         for tag in tags:
             self.addTag(tag)
 
         self.restoreExpandState()
 
         if self.selectedNode is None:
-            notebook = noteStore.getDefaultNotebook(authToken)
+            notebook = GeeknoteGetDefaultNotebook()
             self.selectNotebook(notebook)
 
     # Render the navigation buffer in the navigation window..

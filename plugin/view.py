@@ -3,16 +3,10 @@ import tempfile
 
 from enml  import *
 from utils import *
-
-from geeknote.geeknote import *
+from conn  import *
 
 # Maps buffer names to NoteTracker objects.
 openNotes = {}
-
-# Connection to Geeknote (XXX: move this out)
-geeknote  = GeekNote()
-authToken = geeknote.authToken
-noteStore = geeknote.getNoteStore()
 
 #
 # Holds all information that needs to be tracked for any note that has been
@@ -79,10 +73,6 @@ def GeeknoteGetOpenNote(filename):
     if filename in openNotes:
         return openNotes[filename].note
     return None
-
-# Load a given note's content
-def GeeknoteLoadNote(note):
-    return noteStore.getNote(authToken, note.guid, True, False, False, False)
 
 # Determine if the note has been modified since since it was last saved.
 def GeeknoteNoteIsModified(note):

@@ -1,13 +1,10 @@
 import vim
 import re
 
-from explorer          import Explorer
-from view              import *
-from utils             import *
-
-from geeknote.geeknote import *
-from geeknote.tools    import *
-from enml              import *
+from explorer import Explorer
+from view     import *
+from utils    import *
+from enml     import *
 
 import evernote.edam.type.ttypes  as Types
 import evernote.edam.error.ttypes as Errors
@@ -30,10 +27,7 @@ import evernote.edam.error.ttypes as Errors
 
 #======================== Globals ============================================#
 
-geeknote  = GeekNote()
-authToken = geeknote.authToken
-noteStore = geeknote.getNoteStore()
-explorer  = Explorer()
+explorer = Explorer()
 
 #======================== Geeknote Functions  ================================#
 
@@ -74,7 +68,8 @@ def GeeknoteCreateNote(title):
     note.guid         = None
     note.created      = None
     note.notebookGuid = notebook.guid
-    note = noteStore.createNote(authToken, note)
+
+    note = GeeknoteCreateNewNote(note)
     GeeknoteOpenNote(note)
 
     # Add the note to the navigation window.
@@ -83,32 +78,16 @@ def GeeknoteCreateNote(title):
     explorer.render()
 
 def GeeknoteCreateNotebook(name):
-    name = name.strip('"\'')
+    notebook = Types.Notebook()
+    notebook.name = name.strip('"\'')
     try:
-        notebook = Notebooks().create(name)
+        notebook = GeeknoteCreateNewNotebook(notebook)
     except:
         vim.command('echoerr "Failed to create notebook."')
 
     explorer.addNotebook(notebook)
     explorer.selectNotebook(notebook)
     explorer.render()
-
-def GeeknoteGetDefaultNotebook():
-    try:
-        return noteStore.getDefaultNotebook(authToken)
-
-    except Errors.EDAMUserException as e:
-        vim.command('echoerr "%s"' % e.string)
-
-    except Errors.EDAMSystemException as e:
-        vim.command('echoerr "Unexpected error - %d: %s"' % \
-            (e.errorCode, e.string))
-
-    return None
-
-def GeeknoteGetNote(guid):
-    return geeknote.getNoteStore().getNote(
-               authToken, guid, True, False, False, False)
 
 def GeeknoteSaveAsNote():
     global explorer
@@ -154,8 +133,8 @@ def GeeknoteSaveAsNote():
         note.notebookGuid = notebook.guid
 
     try:
-        note = noteStore.createNote(authToken, note)
-        note = GeeknoteGetNote(note.guid)
+        note = GeeknoteCreateNewNote(note)
+        note = GeeknoteLoadNote(note)
     except Exception as e:
         GeeknoteHandleNoteSaveFailure(note, e)
         return
@@ -171,7 +150,7 @@ def GeeknoteSaveNote(filename):
     changed = GeeknoteCommitChangesToNote(note)
     if changed:
         try:
-            noteStore.updateNote(authToken, note)
+            GeeknoteUpdateNote(note)
         except Exception as e:
             GeeknoteHandleNoteSaveFailure(note, e)
 
