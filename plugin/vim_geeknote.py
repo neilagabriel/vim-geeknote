@@ -191,6 +191,12 @@ def GeeknoteSync():
     explorer.refresh()    
     explorer.render()
 
+def GeeknoteCommitStart():
+    explorer.commitChanges()
+
+def GeeknoteCommitComplete():
+    explorer.render()
+
 def GeeknoteToggle():
     global explorer
 

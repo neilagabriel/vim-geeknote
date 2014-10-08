@@ -81,6 +81,20 @@ GeeknoteSync()
 endOfPython
 endfunction
 
+function! Vim_GeeknoteCommitStart()
+python << endOfPython
+from vim_geeknote import GeeknoteCommitStart
+GeeknoteCommitStart()
+endOfPython
+endfunction
+
+function! Vim_GeeknoteCommitComplete()
+python << endOfPython
+from vim_geeknote import GeeknoteCommitComplete
+GeeknoteCommitComplete()
+endOfPython
+endfunction
+
 " ---------------------- User Commands ----------------------------------------
 
 command!          Geeknote               call Vim_GeeknoteToggle()
