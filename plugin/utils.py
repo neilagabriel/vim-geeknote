@@ -30,6 +30,12 @@ def bufwinnr(bnum):
         wnum += 1
     return windows
 
+def numberwidth():
+    return int(vim.eval('&numberwidth'))
+
+def foldcolumn():
+    return int(vim.eval('&foldcolumn'))
+
 def getActiveWindow():
     return winnr()
 

@@ -16,10 +16,11 @@ registry = {}
 
 class Node(object):
     def __init__(self, indent=0):
-        self.parent   = None
-        self.children = []
-        self.row      = -1
-        self.indent   = indent
+        self.parent    = None
+        self.children  = []
+        self.row       = -1
+        self.indent    = indent
+        self.prefWidth = 0
         self.close()
 
     def activate(self):
@@ -37,6 +38,9 @@ class Node(object):
 
     def expand(self):
         self.expanded = True
+
+    def getPreferredWidth(self):
+        return self.prefWidth
 
     def removeChild(self, node):
         if node in self.children:
@@ -101,6 +105,8 @@ class NotebookNode(Node):
             line = '-'
 
         line += ' ' + self.name
+        self.prefWidth = len(line)
+
         buffer.append('{:<50} [{}]'.format(line, self.notebook.guid))
         self.row = len(buffer)
 
@@ -151,7 +157,11 @@ class NoteNode(Node):
 
     def render(self, buffer):
         line  = ' ' * (self.indent * 4)
-        line += '{:<46} [{}]'.format(self.title, self.note.guid)
+        line += self.title
+
+        self.prefWidth = len(line)
+
+        line = '{:<50} [{}]'.format(line, self.note.guid)
         buffer.append(line)
         self.row = len(buffer)
 
@@ -474,6 +484,9 @@ class Explorer(object):
             if self.selectedNode.row != -1:
                 vim.current.window.cursor = (self.selectedNode.row, 0)
 
+        # Resize the window as appropriate.
+        self.resize()
+
         #
         # Write the navigation window but disable BufWritePre events before
         # doing so. We only want to check for user changes when the user was
@@ -485,6 +498,29 @@ class Explorer(object):
         vim.command('set ei={}'.format(ei))
 
         setActiveWindow(origWin)
+
+    def resize(self):
+        # Fix the width if requested.
+        if int(vim.eval('exists("g:GeeknoteExplorerWidth")')):
+            width = int(vim.eval('g:GeeknoteExplorerWidth'))
+            vim.command("vertical resize %d" % width)
+            return
+
+        # Otherwise, resize it based on content and caps. 
+        maxWidth = 0
+        for key in registry:
+            width = registry[key].getPreferredWidth()
+            if width > maxWidth:
+                maxWidth = width
+
+        hpad = numberwidth() + foldcolumn() + 1
+        maxWidth += hpad
+
+        if int(vim.eval('exists("g:GeeknoteMaxExplorerWidth")')):
+            width = int(vim.eval('g:GeeknoteMaxExplorerWidth'))
+            if width < maxWidth:
+                maxWidth = width
+        vim.command("vertical resize %d" % maxWidth)
 
     def restoreExpandState(self):
         for guid in self.expandState:

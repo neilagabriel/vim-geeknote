@@ -58,6 +58,27 @@ creating, editing, and viewing your notes in Vim, this trade-off is well worth
 it. And of course it does not mean that you cannot use the markdown format in
 your notes.
 
+### Navigation Window Behavior:
+
+#### Limit Width:
+
+By default, vim-geeknote will attempt to resize the navigation window based on
+its current content. If you have notebooks or notes with very long names you
+may want to use the following option to cap the size of the window:
+
+    let g:GeeknoteMaxExplorerWidth=<value>
+
+Where `<value>` is replaced with the max width of the window.
+
+#### Fix Width:
+
+Use the following option to fix the width of the window to a specific value:
+
+    let g:GeeknoteExplorerWidth=<value>
+
+Where `<value>` is replaced with the desired width of the window. This option
+overrides all other width-related options.
+
 ## Usage
 
 Use `:Geeknote` to open/toggle the geeknote navigation window. If the
