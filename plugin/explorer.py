@@ -249,6 +249,8 @@ class Explorer(object):
                 self.dataFile.name, 
                 ':call Vim_GeeknoteCommitComplete()')
 
+        autocmd('VimLeave', '*', ':call Vim_GeeknoteTerminate()')
+
     def __del__(self):
         try:
             self.dataFile.close()
