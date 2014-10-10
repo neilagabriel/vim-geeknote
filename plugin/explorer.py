@@ -40,7 +40,12 @@ class Node(object):
         self.expanded = True
 
     def getPreferredWidth(self):
-        return self.prefWidth
+        if self.parent is None or self.parent.isExpanded():
+            return self.prefWidth
+        return 0
+
+    def isExpanded(self):
+        return self.expanded is True
 
     def removeChild(self, node):
         if node in self.children:
@@ -213,6 +218,7 @@ class TagNode(Node):
             line = '-'
 
         line += ' ' + self.name
+        self.prefWidth = len(line)
 
         if numNotes != 0:
             line += ' (%d)' % numNotes
