@@ -20,7 +20,7 @@ def GeeknoteGetDefaultNotebook():
     return noteStore.getDefaultNotebook(authToken)
 
 def GeeknoteGetNotes(searchWords=""):
-    filter = NoteStore.NoteFilter(order = Types.NoteSortOrder.CREATED)
+    filter = NoteStore.NoteFilter(order = Types.NoteSortOrder.UPDATED)
     filter.words = searchWords
 
     meta = NoteStore.NotesMetadataResultSpec()
