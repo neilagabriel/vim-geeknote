@@ -86,7 +86,6 @@ class NotebookNode(Node):
             del self.children[:]
 
             notes = self.getNotes()
-            notes.sort(key=lambda n: n.title)
 
             for note in notes:
                 self.addNote(note)
