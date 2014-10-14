@@ -5,20 +5,101 @@ CONTENTS                                                         *vim-geeknote*
 
     1. Intro ............................................. |vim-geeknote-intro|
     2. Requirements ............................... |vim-geeknote-requirements|
-    3. Usage ............................................. |vim-geeknote-usage|
-    4. Licence ......................................... |vim-geeknote-licence|
+    3. Installation ............................... |vim-geeknote-installation|
+    4. Usage ............................................. |vim-geeknote-usage|
+    5. Acknowledgements ........................ |vim-geeknote-acknowlegements|
+    6. Todo ............................................... |vim-geeknote-todo|
+    7. License ......................................... |vim-geeknote-license|
 ===============================================================================
+
 1. Intro                                                   *vim-geeknote-intro*
 
 Integrates Geeknote/Evernote into Vim.
 - Notebook navigation, creation, and renaming
 - Note viewing, renaming, editing, and creation.
 
-2. Requirements                                     *vim-geeknote-requirements*
+2. Dependencies/Requirements                        *vim-geeknote-requirements*
 
 - Vim 7.4.364 or newer (issues observed with earlier versions)
+- Linux (not tested on operating systems)
 
-3. Usage                                                   *vim-geeknote-usage*
+3. Installation                                     *vim-geeknote-installation*
+
+-  If you have not done so already, install [Geeknote](http://www.geeknote.me)
+   and login to make sure it is functional. You must login before attempting to
+   use the plugin.
+
+-  Use your plugin manager of choice to install plugin.
+
+* [Vundle](https://github.com/gmarik/vundle)
+   * Add `Bundle 'https://github.com/neilagabriel/vim-geeknote'` to .vimrc
+   * Run `:BundeInstall`
+* [Pathogen](https://github.com/tpope/vim-pathogen)
+   * `git clone https://github.com/neilagabriel/vim-geeknote ~/.vim/bundle/vim-geeknote`
+
+OPTIONAL SETUP AND CONFIGURATION
+
+1. Quick toggle
+
+    noremap <F8> :Geeknote<cr>
+
+2. Note format
+
+Use the option `g:GeeknoteFormat` to set the format mode used when saving notes
+to Geeknote. This is the equivalent of the `--format` options that Geeknote
+supports. E.g.:
+
+    let g:GeeknoteFormat="markdown"
+
+**Warning:** It is not advised that you use this option, use it at your own
+risk. The issue is that in the process of converting your notes from markdown
+to HTML and back, content is often reformatted. Worse is that if you edit and
+save a note that has been reformatted, there is even a large potential to lose
+content! This is a side-effect of the various tools/libs that Geeknote uses in
+performing the conversions. With the default settings, notes saved with
+vim-geeknote bypass these format conversions. This means that notes will be
+saved exactly as they appear within Vim. It also means that the notes will
+appear in plain-text when viewed outside of Vim in Evernote. If you plan on
+creating, editing, and viewing your notes in Vim, this trade-off is well worth
+it. And of course it does not mean that you cannot use the markdown format in
+your notes.
+
+3. Navigation Window Behavior
+
+3a. Limit Width
+
+By default, vim-geeknote will attempt to resize the navigation window based on
+its current content. If you have notebooks or notes with very long names you
+may want to use the following option to cap the size of the window:
+
+    let g:GeeknoteMaxExplorerWidth=<value>
+
+Where `<value>` is replaced with the max width of the window.
+
+3b. Fix Width
+
+Use the following option to fix the width of the window to a specific value:
+
+    let g:GeeknoteExplorerWidth=<value>
+
+Where `<value>` is replaced with the desired width of the window. This option
+overrides all other width-related options.
+
+3c. Limit View to Specfic Notebooks
+
+By default, all notebooks will be shown in the navigation window. Depending on
+the number notebooks you have, this can add a non-trivial amount of time to the
+load time of the plugin. You may also simply not want to see your full set of
+notebooks when working in Vim. Use the following option to limit the display to
+a specific notebook or set of notebooks:
+
+    let g:GeeknoteNotebooks=
+    \    [
+    \        'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeee', 
+    \        'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeee', 
+    \    ]
+
+4. Usage                                                   *vim-geeknote-usage*
 
 NAVIGATION                                                          *:Geeknote*
 
@@ -34,14 +115,9 @@ vertical split. To save changes to the note, simply save the buffer (e.g.
 `:w`). The title of the note will be shown on the first line. The title line
 should not be deleted from the buffer but *may* be modified to rename the note.
 
-CREATING AND RENAMING NOTEBOOKS                       *:GeeknoteCreateNotebook*
+CREATING NOTEBOOKS AND NOTES                          *:GeeknoteCreateNotebook*
 
 Use `:GeeknoteCreateNotebook <name>` to create a new notebook.
-
-To rename notebooks or notes, simply modify the the name of the notebook/note
-in the navigation window and save the bugger (e.g. `:w`). Any number of changes
-can be made before saving, but be sure not to modify an item's GUID.
-
 
 CREATING NOTES                                            *:GeeknoteCreateNote*
 
@@ -49,14 +125,18 @@ Use `:GeeknoteCreateNote <name>` to create a new note. The note will be created
 in the notebook currently selected in the navigation window. If a notebook is
 not selected, the note will be created in the default notebook. A new buffer
 for the note will be displayed in the previous window if it is possible to do
-so or in a new vertical split. The note will not be created until the buffer is
-saved (e.g. `:w`). Once saved, the note will be created and the navigation
-window will update.
+so or in a new vertical split.
 
 Use `:GeeknoteSaveAsNote` to create a new note using the content of the current
 buffer. The first line in the buffer will be used as the note's title. The
 remainder of the buffer will be saved as note content. Note this this command
 will create and switch to a new buffer.
+
+RENAMING NOTEBOOKS AND NOTES
+
+To rename notebooks or notes, simply modify the the name of the notebook/note
+in the navigation window and save the bugger (e.g. `:w`). Any number of changes
+can be made before saving, but be sure not to modify an item's GUID.
 
 MOVING NOTES                                        *vim-geeknote-moving-notes*
 
@@ -71,7 +151,20 @@ Use `:GeeknoteSync` to update the navigation with the latest data on the
 Evernote server. Warning, any notes that are opened when this command is issued
 will not be updated. Support for this will be added in future releases.
 
-4. Licence                                               *vim-geeknote-licence*
+5. Acknowledgements                              *vim-geeknote-acknowlegements*
+
+- [Geeknote](http://www.geeknote.me)
+- [The Nerd Tree](https://github.com/scrooloose/nerdtree)
+- [Vim Plugin Starter Kit](https://github.com/JarrodCTaylor/vim-plugin-starter-kit)
+
+6. Todo                                                     *vim-geeknote-todo*
+
+- Refresh open notes upon `:GeeknoteSync`
+- Tag support
+- Prettier navigation window
+- Improved notebook creation process
+
+7. License                                               *vim-geeknote-license*
 
 Copyright (c) Neil Gabriel. Distributed under the same terms as Vim itself.
 See `:help license`.

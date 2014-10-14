@@ -2,7 +2,7 @@
 
 [Geeknote](http://www.geeknote.me) Plugin for Vim. Under active development.
 
-## Supported Features
+## Intro 
 
 Integrates Geeknote/Evernote into Vim.
 - Notebook navigation, creation, and renaming
@@ -25,11 +25,11 @@ Integrates Geeknote/Evernote into Vim.
 
 2. Use your plugin manager of choice to install plugin.
 
-- [Vundle](https://github.com/gmarik/vundle)
-   - Add `Bundle 'https://github.com/neilagabriel/vim-geeknote'` to .vimrc
-   - Run `:BundeInstall`
-- [Pathogen](https://github.com/tpope/vim-pathogen)
-   - `git clone https://github.com/neilagabriel/vim-geeknote ~/.vim/bundle/vim-geeknote`
+* [Vundle](https://github.com/gmarik/vundle)
+   * Add `Bundle 'https://github.com/neilagabriel/vim-geeknote'` to .vimrc
+   * Run `:BundeInstall`
+* [Pathogen](https://github.com/tpope/vim-pathogen)
+   * `git clone https://github.com/neilagabriel/vim-geeknote ~/.vim/bundle/vim-geeknote`
 
 ## Optional Setup and Configuration
 
@@ -113,6 +113,8 @@ should not be deleted from the buffer but *may* be modified to rename the note.
 
 Use `:GeeknoteCreateNotebook <name>` to create a new notebook.
 
+CREATING NOTES                                            *:GeeknoteCreateNote*
+
 Use `:GeeknoteCreateNote <name>` to create a new note. The note will be created
 in the notebook currently selected in the navigation window. If a notebook is
 not selected, the note will be created in the default notebook. A new buffer
@@ -130,7 +132,7 @@ To rename notebooks or notes, simply modify the the name of the notebook/note
 in the navigation window and save the bugger (e.g. `:w`). Any number of changes
 can be made before saving, but be sure not to modify an item's GUID.
 
-### Note Movement
+### Moving Notes
 
 To move a note into a different notebook, simply move the note's text (includes
 title and GUID) under the desired notebook in the navigation window and save
