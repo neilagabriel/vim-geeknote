@@ -71,7 +71,7 @@ class NotebookNode(Node):
         self.setName(notebook.name)
 
     def addNote(self, note):
-        node = NoteNode(note, self.notebook, self.indent + 1)
+        node = NoteNode(note, self.indent + 1)
         registry[note.guid] = node
 
         self.addChild(node)
@@ -124,11 +124,11 @@ class NotebookNode(Node):
 #======================== NoteNode ===========================================#
 
 class NoteNode(Node):
-    def __init__(self, note, notebook, indent=1):
+    def __init__(self, note, indent=1):
         super(NoteNode, self).__init__(indent)
 
-        self.note     = note
-        self.notebook = notebook
+        self.note = note
+        self.notebookGuid = note.notebookGuid
         self.setTitle(note.title)
 
     def activate(self):
@@ -155,8 +155,8 @@ class NoteNode(Node):
             self.note.title = self.title
             GeeknoteUpdateNote(self.note)
 
-        if self.note.notebookGuid != self.notebook.guid:
-            self.note.notebookGuid = self.notebook.guid
+        if self.note.notebookGuid != self.notebookGuid:
+            self.note.notebookGuid = self.notebookGuid
             GeeknoteUpdateNote(self.note)
 
     def render(self, buffer):
@@ -183,8 +183,7 @@ class TagNode(Node):
         self.setName(tag.name)
 
     def addNote(self, note):
-        notebook = registry[note.notebookGuid]
-        node     = NoteNode(note, notebook, self.indent + 1)
+        node = NoteNode(note, self.indent + 1)
 
         if note.guid not in registry:
             registry[note.guid] = node
@@ -317,9 +316,9 @@ class Explorer(object):
                     # Did the user move the note into a different notebook?
                     newParent = self.findNotebookForNode(row)
                     if newParent is not None:
-                        if newParent.notebook.guid != node.notebook.guid:
-                            oldParent = registry[node.notebook.guid]
-                            node.notebook = newParent.notebook
+                        if newParent.notebook.guid != node.notebookGuid:
+                            oldParent = registry[node.notebookGuid]
+                            node.notebookGuid = newParent.notebook.guid
 
                             newParent.expand()
                             newParent.addChild(node)
@@ -362,12 +361,6 @@ class Explorer(object):
             nodeRow -= 1
         return None
 
-    def getContainingNotebook(self, guid):
-        node = registry[guid]
-        if isinstance(node, NoteNode):
-            return node.notebook
-        return None
-
     def getSelectedNotebook(self):
         if self.buffer is None:
             return None
@@ -383,7 +376,7 @@ class Explorer(object):
             if isinstance(node, NotebookNode):
                 return node.notebook
             if isinstance(node, NoteNode):
-                return node.notebook
+                return registry[node.notebookGuid]
         return None
 
     def getNodeGuid(self, nodeText):
@@ -427,27 +420,34 @@ class Explorer(object):
 
     def refresh(self):
         self.saveExpandState()
-
-        del self.notebooks[:]
-        del self.tags[:]
-
         registry.clear()
 
         self.noteCounts = GeeknoteFindNoteCounts()
 
-        notebooks = GeeknoteGetNotebooks()
-        for notebook in notebooks:
-            self.addNotebook(notebook)
+        del self.notebooks[:]
+        self.refreshNotebooks()
 
+        del self.tags[:]
         tags = GeeknoteGetTags()
         for tag in tags:
             self.addTag(tag)
-
         self.restoreExpandState()
 
         if self.selectedNode is None:
             notebook = GeeknoteGetDefaultNotebook()
             self.selectNotebook(notebook)
+
+    def refreshNotebooks(self):
+        if int(vim.eval('exists("g:GeeknoteNotebooks")')):
+            guids = vim.eval('g:GeeknoteNotebooks')
+            for guid in guids:
+                notebook = GeeknoteGetNotebook(guid)
+                if notebook is not None:
+                    self.addNotebook(notebook)
+        else:
+            notebooks = GeeknoteGetNotebooks()
+            for notebook in notebooks:
+                self.addNotebook(notebook)
 
     # Render the navigation buffer in the navigation window..
     def render(self):
@@ -556,15 +556,16 @@ class Explorer(object):
             setActiveWindow(origWin)
 
     def selectNote(self, note):
-        notebook = registry[note.notebookGuid]
-        notebook.expand()
-
+        if note.notebookGuid in registry:
+            notebook = registry[note.notebookGuid]
+            notebook.expand()
         node = registry[note.guid]
         self.selectNode(node)
 
     def selectNotebook(self, notebook):
-        node = registry[notebook.guid]
-        self.selectNode(node)
+        if notebook.guid in registry:
+            node = registry[notebook.guid]
+            self.selectNode(node)
 
     def selectNotebookIndex(self, index):
         if index < len(self.notebooks):

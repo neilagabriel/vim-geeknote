@@ -45,6 +45,12 @@ def GeeknoteGetNotes(searchWords=""):
 
     return notes
 
+def GeeknoteGetNotebook(guid):
+    try:
+        return noteStore.getNotebook(authToken, guid)
+    except:
+        return None
+
 def GeeknoteGetNotebooks():
     return noteStore.listNotebooks(authToken)
 
