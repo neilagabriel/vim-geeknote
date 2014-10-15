@@ -1,9 +1,18 @@
 import evernote.edam.limits.constants as Limits
 
+from config import *
+from stub   import *
 from geeknote.geeknote import *
 
 # Connection to Geeknote
-geeknote  = GeekNote()
+if STUB_MODE is False:
+    try:
+        geeknote  = GeekNote()
+    except:
+        print "Failed to establish connection to Geeknote"
+else:
+    geeknote = GeekNoteStub()
+
 authToken = geeknote.authToken
 noteStore = geeknote.getNoteStore()
 
