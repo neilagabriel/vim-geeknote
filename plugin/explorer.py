@@ -26,6 +26,9 @@ class Node(object):
     def activate(self):
         self.toggle()
 
+    def adapt(self, line):
+        return False
+
     def addChild(self, node):
         node.parent = self
         self.children.append(node)
@@ -39,6 +42,9 @@ class Node(object):
     def expand(self):
         self.expanded = True
 
+    def getGuid(self):
+        return None
+
     def getPreferredWidth(self):
         if self.parent is None or self.parent.isExpanded():
             return self.prefWidth
@@ -46,6 +52,9 @@ class Node(object):
 
     def isExpanded(self):
         return self.expanded is True
+
+    def refresh(self):
+        pass
 
     def removeChild(self, node):
         if node in self.children:
@@ -70,10 +79,31 @@ class NotebookNode(Node):
         self.loaded   = False
         self.setName(notebook.name)
 
+    def adapt(self, line):
+        if len(self.children) > 0:
+            r = re.compile("^[+-]"    # match +/- character at start of line
+                           "(?:\s+)?" # optional whitespace
+                           "(.*)"     # notebook name
+                           "\(\d+\)"  # note count
+                           ".*$")     # guid till end of line
+        else:
+            r = re.compile("^[+-]"    # match +/- character at start of line
+                           "(?:\s+)?" # optional whitespace
+                           "(.*)"     # notebook name
+                           "\[.*\]"   # guid
+                           ".*$")     # everything else till end of line
+
+        m = r.match(line)
+        if m:
+            name = m.group(1).strip()
+            self.setName(name)
+            return True
+
+        return False
+
     def addNote(self, note):
         node = NoteNode(note, self.indent + 1)
         registry[note.guid] = node
-
         self.addChild(node)
 
     def commitChanges(self):
@@ -93,6 +123,9 @@ class NotebookNode(Node):
 
         super(NotebookNode, self).expand()
 
+    def getGuid(self):
+        return self.notebook.guid
+
     def getNotes(self):
         searchWords = 'notebook:"%s"' % self.notebook.name
         return GeeknoteGetNotes(searchWords)
@@ -109,6 +142,9 @@ class NotebookNode(Node):
             line = '-'
 
         line += ' ' + self.name
+        if numNotes != 0:
+            line += ' (%d)' % numNotes
+
         self.prefWidth = len(line)
 
         buffer.append('{:<50} [{}]'.format(line, self.notebook.guid))
@@ -128,8 +164,21 @@ class NoteNode(Node):
         super(NoteNode, self).__init__(indent)
 
         self.note = note
-        self.notebookGuid = note.notebookGuid
-        self.setTitle(note.title)
+        self.refresh()
+
+    def adapt(self, line):
+        r = re.compile("^\s+"    # leading whitespace
+                       "(.*)"    # note title
+                       "\[.*\]"  # guid
+                       ".*$")    # everything else till end of line
+
+        m = r.match(line)
+        if m:
+            title = m.group(1).strip()
+            self.setTitle(title)
+            return True
+
+        return False
 
     def activate(self):
         super(NoteNode, self).activate()
@@ -155,9 +204,23 @@ class NoteNode(Node):
             self.note.title = self.title
             GeeknoteUpdateNote(self.note)
 
-        if self.note.notebookGuid != self.notebookGuid:
-            self.note.notebookGuid = self.notebookGuid
-            GeeknoteUpdateNote(self.note)
+        #if self.note.notebookGuid != self.notebookGuid:
+        #    self.note.notebookGuid = self.notebookGuid
+        #    GeeknoteUpdateNote(self.note)
+
+    def getGuid(self):
+        return self.note.guid
+
+    def refresh(self):
+        print "Note '%s' refreshing" % self.note.title
+        if self.parent is not None:
+            if isinstance(self.parent, NotebookNode):
+                print "    my parent is a notebook: %s" % self.parent.notebook.name
+            elif isinstance(self.parent, TagNode):
+                print "    my parent is a tag: %s" % self.parent.tag.name
+
+        self.notebookGuid = self.note.notebookGuid
+        self.setTitle(self.note.title)
 
     def render(self, buffer):
         line  = ' ' * (self.indent * 4)
@@ -200,6 +263,9 @@ class TagNode(Node):
 
         super(TagNode, self).expand()
 
+    def getGuid(self):
+        return self.tag.guid
+
     def getNotes(self):
         searchWords = 'tag:"%s"' % self.tag.name
         return GeeknoteGetNotes(searchWords)
@@ -216,10 +282,10 @@ class TagNode(Node):
             line = '-'
 
         line += ' ' + self.name
-        self.prefWidth = len(line)
-
         if numNotes != 0:
             line += ' (%d)' % numNotes
+
+        self.prefWidth = len(line)
 
         buffer.append('{:<50} [{}]'.format(line, self.tag.guid))
         self.row = len(buffer)
@@ -296,69 +362,69 @@ class Explorer(object):
 
         for row in xrange(len(self.buffer)):
             line = self.buffer[row]
+            guid = self.getNodeGuid(line)
+            if guid is not None:
+                parent   = self.getNodeParent(row)
+                node     = registry[guid]
+                modified = node.adapt(line)
+
+                if modified:
+                    if node not in self.modifiedNodes:
+                        self.modifiedNodes.append(node)
 
             # Look for changes to notes.
-            r = re.compile('^\s+(.+)\[(.+)\]$')
-            m = r.match(line)
-            if m: 
-                title = m.group(1).strip()
-                guid  = m.group(2)
-                node  = registry[guid]
-                if isinstance(node       , NoteNode) and \
-                   isinstance(node.parent, NotebookNode):
+            #r = re.compile('^\s+(.+)\[(.+)\]$')
+            #m = r.match(line)
+            #if m: 
+            #    title = m.group(1).strip()
+            #    guid  = m.group(2)
+            #    node  = registry[guid]
+            #    if isinstance(node       , NoteNode) and \
+            #       isinstance(node.parent, NotebookNode):
 
-                    # Did the user change the note's title?
-                    if title != node.title:
-                        node.setTitle(title)
-                        if node not in self.modifiedNodes:
-                            self.modifiedNodes.append(node)
+            #        # Did the user move the note into a different notebook?
+            #        newParent = self.findNotebookForNode(row)
+            #        if newParent is not None:
+            #            if newParent.notebook.guid != node.notebookGuid:
+            #                oldParent = registry[node.notebookGuid]
+            #                node.notebookGuid = newParent.notebook.guid
 
-                    # Did the user move the note into a different notebook?
-                    newParent = self.findNotebookForNode(row)
-                    if newParent is not None:
-                        if newParent.notebook.guid != node.notebookGuid:
-                            oldParent = registry[node.notebookGuid]
-                            node.notebookGuid = newParent.notebook.guid
+            #                newParent.expand()
+            #                newParent.addChild(node)
+            #                oldParent.removeChild(node)
 
-                            newParent.expand()
-                            newParent.addChild(node)
-                            oldParent.removeChild(node)
-
-                            if node not in self.modifiedNodes:
-                                self.modifiedNodes.append(node)
-                continue
-
-            # Look for changes to notebooks.
-            r = re.compile('^[\+-](.+)\[(.+)\]$')
-            m = r.match(line)
-            if m:
-                name = m.group(1).strip()
-                guid = m.group(2)
-                node = registry[guid]
-                if isinstance(node, NotebookNode):
-                    if name != node.name:
-                        node.setName(name)
-                        self.modifiedNodes.append(node)
-                continue
+            #                if node not in self.modifiedNodes:
+            #                    self.modifiedNodes.append(node)
+            #    continue
 
     def commitChanges(self):
         self.applyChanges()
         for node in self.modifiedNodes:
             node.commitChanges()
+
+            for guid in registry:
+                tempNode = registry[guid]
+                if tempNode.getGuid() == node.getGuid():
+                    tempNode.refresh()
+
         del self.modifiedNodes[:]
 
-    #
-    # Search upwards, starting at the given row number and return the first
-    # note nodebook found. 
-    #
-    def findNotebookForNode(self, nodeRow):
-        while nodeRow > 0:
-            guid = self.getNodeGuid(self.buffer[nodeRow])
+    def getNodeParent(self, row):
+        guid = self.getNodeGuid(self.buffer[row])
+        node = registry[guid]
+
+        # Only notes have parents
+        if not isinstance(node, NoteNode):
+            return None
+
+        while row > 0:
+            guid = self.getNodeGuid(self.buffer[row])
             if guid is not None: 
                 node = registry[guid]
-                if isinstance(node, NotebookNode):
+                if not isinstance(node, NoteNode):
                     return node
-            nodeRow -= 1
+            row -= 1
+
         return None
 
     def getSelectedNotebook(self):
