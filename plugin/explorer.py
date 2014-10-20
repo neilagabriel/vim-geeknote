@@ -6,11 +6,24 @@ from view  import *
 from utils import *
 from conn  import *
 
+#======================== Registry ===========================================#
+
 #
 # A dictionary containing an entry for all nodes contained in the explorer
 # window, keyed by guid.
 #
 registry = {}
+
+def addNode(guid, node):
+    registry[guid] = node
+
+def deleteNodes():
+    registry.clear()
+
+def getNode(guid):
+    if guid in registry:
+        return registry[guid]
+    return None 
 
 #======================== Node ===============================================#
 
@@ -72,7 +85,7 @@ class NotebookNode(Node):
 
     def addNote(self, note):
         node = NoteNode(note, self.indent + 1)
-        registry[note.guid] = node
+        addNode(note.guid, node)
 
         self.addChild(node)
 
@@ -185,8 +198,9 @@ class TagNode(Node):
     def addNote(self, note):
         node = NoteNode(note, self.indent + 1)
 
+        # FIXME
         if note.guid not in registry:
-            registry[note.guid] = node
+            addNode(note.guid, node)
 
         self.addChild(node)
 
@@ -264,7 +278,7 @@ class Explorer(object):
     def activateNode(self, line):
         guid = self.getNodeGuid(line)
         if guid is not None:
-            node = registry[guid]
+            node = getNode(guid)
             node.activate()
 
             # Rerender the navigation window. Keep the current cursor postion.
@@ -273,7 +287,7 @@ class Explorer(object):
             vim.current.window.cursor = (row, col)
 
     def addNote(self, note):
-        notebook = registry[note.notebookGuid]
+        notebook = getNode(note.notebookGuid)
         notebook.addNote(note) 
 
     def addNotebook(self, notebook):
@@ -281,14 +295,14 @@ class Explorer(object):
         self.notebooks.append(node)
         self.notebooks.sort(key=lambda n: n.notebook.name.lower())
 
-        registry[notebook.guid] = node
+        addNode(notebook.guid, node)
 
     def addTag(self, tag):
         tagNode = TagNode(tag)
         self.tags.append(tagNode)
         self.tags.sort(key=lambda t: t.tag.name.lower())
 
-        registry[tag.guid] = tagNode
+        addNode(tag.guid, tagNode)
 
     def applyChanges(self):
         if isBufferModified(self.buffer.number) is False:
@@ -303,7 +317,7 @@ class Explorer(object):
             if m: 
                 title = m.group(1).strip()
                 guid  = m.group(2)
-                node  = registry[guid]
+                node  = getNode(guid)
                 if isinstance(node       , NoteNode) and \
                    isinstance(node.parent, NotebookNode):
 
@@ -317,7 +331,7 @@ class Explorer(object):
                     newParent = self.findNotebookForNode(row)
                     if newParent is not None:
                         if newParent.notebook.guid != node.notebookGuid:
-                            oldParent = registry[node.notebookGuid]
+                            oldParent = getNode(node.notebookGuid)
                             node.notebookGuid = newParent.notebook.guid
 
                             newParent.expand()
@@ -334,7 +348,7 @@ class Explorer(object):
             if m:
                 name = m.group(1).strip()
                 guid = m.group(2)
-                node = registry[guid]
+                node = getNode(guid)
                 if isinstance(node, NotebookNode):
                     if name != node.name:
                         node.setName(name)
@@ -355,7 +369,7 @@ class Explorer(object):
         while nodeRow > 0:
             guid = self.getNodeGuid(self.buffer[nodeRow])
             if guid is not None: 
-                node = registry[guid]
+                node = getNode(guid)
                 if isinstance(node, NotebookNode):
                     return node
             nodeRow -= 1
@@ -372,11 +386,11 @@ class Explorer(object):
 
         guid = self.getNodeGuid(text)
         if guid is not None:
-            node = registry[guid]
+            node = getNode(guid)
             if isinstance(node, NotebookNode):
                 return node.notebook
             if isinstance(node, NoteNode):
-                return registry[node.notebookGuid]
+                return getNode(node.notebookGuid)
         return None
 
     def getNodeGuid(self, nodeText):
@@ -420,7 +434,7 @@ class Explorer(object):
 
     def refresh(self):
         self.saveExpandState()
-        registry.clear()
+        deleteNodes()
 
         self.noteCounts = GeeknoteFindNoteCounts()
 
@@ -516,7 +530,7 @@ class Explorer(object):
         # Otherwise, resize it based on content and caps. 
         maxWidth = 0
         for key in registry:
-            width = registry[key].getPreferredWidth()
+            width = getNode(key).getPreferredWidth()
             if width > maxWidth:
                 maxWidth = width
 
@@ -531,8 +545,8 @@ class Explorer(object):
 
     def restoreExpandState(self):
         for guid in self.expandState:
-            if guid in registry:
-                node = registry[guid]
+            node = getNode(guid)
+            if node is not None:
                 if self.expandState[guid]:
                     node.expand()
                 else:
@@ -556,15 +570,17 @@ class Explorer(object):
             setActiveWindow(origWin)
 
     def selectNote(self, note):
-        if note.notebookGuid in registry:
-            notebook = registry[note.notebookGuid]
-            notebook.expand()
-        node = registry[note.guid]
+        node = getNode(note.notebookGuid)
+        if node is not None:
+            node = getNode(note.notebookGuid)
+            node.expand()
+
+        node = getNode(note.guid)
         self.selectNode(node)
 
     def selectNotebook(self, notebook):
-        if notebook.guid in registry:
-            node = registry[notebook.guid]
+        node = getNode(notebook.guid)
+        if node is not None:
             self.selectNode(node)
 
     def selectNotebookIndex(self, index):

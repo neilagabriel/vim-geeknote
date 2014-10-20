@@ -93,6 +93,21 @@ a specific notebook or set of notebooks:
     \        'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeee', 
     \    ]
 
+### Launching
+
+It may sometimes be convenient to launch geeknote in a new instance of Vim. An
+alias can be helpful for this. Here an example for `bash`:
+
+    alias vim-geeknote='vi -c Geeknote'
+
+### Geeknote Autocommands
+
+vim-geeknote uses FileType `geeknote` for the navigation window. This can be to
+set your own custom behavior. For example, the following code may be used to
+disable line numbers in the navigation window:
+
+    autocmd FileType geeknote setlocal nonumber
+
 ## Usage
 
 ### Toggle Geeknote Navigation Window
@@ -109,11 +124,11 @@ vertical split. To save changes to the note, simply save the buffer (e.g.
 `:w`). The title of the note will be shown on the first line. The title line
 should not be deleted from the buffer but *may* be modified to rename the note.
 
-### Creating Notebooks and Notes
+### Creating Notebooks
 
 Use `:GeeknoteCreateNotebook <name>` to create a new notebook.
 
-CREATING NOTES                                            *:GeeknoteCreateNote*
+### Creating Notes
 
 Use `:GeeknoteCreateNote <name>` to create a new note. The note will be created
 in the notebook currently selected in the navigation window. If a notebook is
