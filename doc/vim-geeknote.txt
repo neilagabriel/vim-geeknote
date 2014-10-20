@@ -85,7 +85,7 @@ Use the following option to fix the width of the window to a specific value:
 Where `<value>` is replaced with the desired width of the window. This option
 overrides all other width-related options.
 
-3c. Limit View to Specfic Notebooks
+3c. Limit View to Specific Notebooks
 
 By default, all notebooks will be shown in the navigation window. Depending on
 the number notebooks you have, this can add a non-trivial amount of time to the

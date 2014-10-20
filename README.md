@@ -79,7 +79,7 @@ Use the following option to fix the width of the window to a specific value:
 Where `<value>` is replaced with the desired width of the window. This option
 overrides all other width-related options.
 
-#### Limit View to Specfic Notebooks
+#### Limit View to Specific Notebooks
 
 By default, all notebooks will be shown in the navigation window. Depending on
 the number notebooks you have, this can add a non-trivial amount of time to the
@@ -143,8 +143,8 @@ will create and switch to a new buffer.
 
 ### Renaming Notebooks and Notes
 
-To rename notebooks or notes, simply modify the the name of the notebook/note
-in the navigation window and save the bugger (e.g. `:w`). Any number of changes
+To rename notebooks or notes, simply modify the name of the notebook/note in
+the navigation window and save the bugger (e.g. `:w`). Any number of changes
 can be made before saving, but be sure not to modify an item's GUID.
 
 ### Moving Notes
@@ -154,7 +154,7 @@ title and GUID) under the desired notebook in the navigation window and save
 the buffer. Similar to renaming, any number notes can be moved before saving
 the buffer.
 
-### Sychronization 
+### Synchronization 
 
 Use `:GeeknoteSync` to update the navigation with the latest data on the
 Evernote server. Warning, any notes that are opened when this command is issued
