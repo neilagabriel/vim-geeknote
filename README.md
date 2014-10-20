@@ -79,7 +79,7 @@ Use the following option to fix the width of the window to a specific value:
 Where `<value>` is replaced with the desired width of the window. This option
 overrides all other width-related options.
 
-#### Limit View to Specfic Notebooks
+#### Limit View to Specific Notebooks
 
 By default, all notebooks will be shown in the navigation window. Depending on
 the number notebooks you have, this can add a non-trivial amount of time to the
@@ -92,6 +92,21 @@ a specific notebook or set of notebooks:
     \        'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeee', 
     \        'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeee', 
     \    ]
+
+### Launching
+
+It may sometimes be convenient to launch geeknote in a new instance of Vim. An
+alias can be helpful for this. Here an example for `bash`:
+
+    alias vim-geeknote='vi -c Geeknote'
+
+### Geeknote Autocommands
+
+vim-geeknote uses FileType `geeknote` for the navigation window. This can be to
+set your own custom behavior. For example, the following code may be used to
+disable line numbers in the navigation window:
+
+    autocmd FileType geeknote setlocal nonumber
 
 ## Usage
 
@@ -109,11 +124,11 @@ vertical split. To save changes to the note, simply save the buffer (e.g.
 `:w`). The title of the note will be shown on the first line. The title line
 should not be deleted from the buffer but *may* be modified to rename the note.
 
-### Creating Notebooks and Notes
+### Creating Notebooks
 
 Use `:GeeknoteCreateNotebook <name>` to create a new notebook.
 
-CREATING NOTES                                            *:GeeknoteCreateNote*
+### Creating Notes
 
 Use `:GeeknoteCreateNote <name>` to create a new note. The note will be created
 in the notebook currently selected in the navigation window. If a notebook is
@@ -128,8 +143,8 @@ will create and switch to a new buffer.
 
 ### Renaming Notebooks and Notes
 
-To rename notebooks or notes, simply modify the the name of the notebook/note
-in the navigation window and save the bugger (e.g. `:w`). Any number of changes
+To rename notebooks or notes, simply modify the name of the notebook/note in
+the navigation window and save the bugger (e.g. `:w`). Any number of changes
 can be made before saving, but be sure not to modify an item's GUID.
 
 ### Moving Notes
@@ -139,7 +154,7 @@ title and GUID) under the desired notebook in the navigation window and save
 the buffer. Similar to renaming, any number notes can be moved before saving
 the buffer.
 
-### Sychronization 
+### Synchronization 
 
 Use `:GeeknoteSync` to update the navigation with the latest data on the
 Evernote server. Warning, any notes that are opened when this command is issued

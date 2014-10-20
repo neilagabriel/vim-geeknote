@@ -1,8 +1,8 @@
 syn match GeeknoteSep      #=\+#
 syn match GeeknoteGUID     #\[.\+\]#
 
-syn match GeeknoteNotebook #^.\+ \[.\+\]#     contains=GeeknoteGUID
-syn match GeeknoteNote     #^    .\+ \[.\+\]# contains=GeeknoteGUID
+syn match GeeknoteNotebook #^[+-].\+\[.\+\]# contains=GeeknoteGUID
+syn match GeeknoteNote     #^    .\+\[.\+\]# contains=GeeknoteGUID
 
 hi def link GeeknoteGUID     ignore
 hi def link GeeknoteSep      Question

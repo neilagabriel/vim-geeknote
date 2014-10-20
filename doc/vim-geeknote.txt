@@ -85,7 +85,7 @@ Use the following option to fix the width of the window to a specific value:
 Where `<value>` is replaced with the desired width of the window. This option
 overrides all other width-related options.
 
-3c. Limit View to Specfic Notebooks
+3c. Limit View to Specific Notebooks
 
 By default, all notebooks will be shown in the navigation window. Depending on
 the number notebooks you have, this can add a non-trivial amount of time to the
@@ -98,6 +98,21 @@ a specific notebook or set of notebooks:
     \        'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeee', 
     \        'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeee', 
     \    ]
+
+3d. Launching
+
+It may sometimes be convenient to launch geeknote in a new instance of Vim. An
+alias can be helpful for this. Here an example for `bash`:
+
+    alias vim-geeknote='vi -c Geeknote'
+
+3e. Geeknote Autocommands
+
+vim-geeknote uses FileType `geeknote` for the navigation window. This can be to
+set your own custom behavior. For example, the following code may be used to
+disable line numbers in the navigation window:
+
+    autocmd FileType geeknote setlocal nonumber
 
 4. Usage                                                   *vim-geeknote-usage*
 
@@ -115,7 +130,7 @@ vertical split. To save changes to the note, simply save the buffer (e.g.
 `:w`). The title of the note will be shown on the first line. The title line
 should not be deleted from the buffer but *may* be modified to rename the note.
 
-CREATING NOTEBOOKS AND NOTES                          *:GeeknoteCreateNotebook*
+CREATING NOTEBOOKS                                    *:GeeknoteCreateNotebook*
 
 Use `:GeeknoteCreateNotebook <name>` to create a new notebook.
 
