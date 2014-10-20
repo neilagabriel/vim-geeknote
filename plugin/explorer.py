@@ -63,6 +63,9 @@ class Node(object):
     def activate(self):
         self.toggle()
 
+    def adapt(self, line):
+        return False
+
     def addChild(self, node):
         node.parent = self
         self.children.append(node)
@@ -90,6 +93,9 @@ class Node(object):
     def isExpanded(self):
         return self.expanded is True
 
+    def refresh(self):
+        pass
+
     def setKey(self, key):
         self.key = key
 
@@ -116,6 +122,31 @@ class NotebookNode(Node):
         self.loaded   = False
         self.setName(notebook.name)
 
+    def adapt(self, line):
+        if len(self.children) > 0:
+            r = re.compile("^[+-]"    # match +/- character at start of line
+                           "(?:\s+)?" # optional whitespace
+                           "(.*)"     # notebook name
+                           "\(\d+\)"  # note count
+                           "(?:\s+)?" # optional whitespace
+                           "\[.*\]"   # key
+                           ".*$")     # everything else till end of line
+        else:
+            r = re.compile("^[+-]"    # match +/- character at start of line
+                           "(?:\s+)?" # optional whitespace
+                           "(.*)"     # notebook name
+                           "\[.*\]"   # key
+                           ".*$")     # everything else till end of line
+
+        m = r.match(line)
+        if m:
+            name = m.group(1).strip()
+            if self.name != name:
+                self.setName(name)
+                return True
+
+        return False
+
     def addNote(self, note):
         node = NoteNode(note, self.indent + 1)
         registerNode(node)
@@ -124,9 +155,8 @@ class NotebookNode(Node):
         return node
 
     def commitChanges(self):
-        if self.notebook.name != self.name:
-            self.notebook.name = self.name
-            GeeknoteUpdateNotebook(self.notebook)
+        self.notebook.name = self.name
+        GeeknoteUpdateNotebook(self.notebook)
 
     def expand(self):
         if self.loaded is False:
@@ -159,6 +189,9 @@ class NotebookNode(Node):
             line = '-'
 
         line += ' ' + self.name
+        if numNotes != 0:
+            line += ' (%d)' % numNotes
+
         self.prefWidth = len(line)
 
         buffer.append('{:<50} [{}]'.format(line, self.getKey()))
@@ -177,9 +210,23 @@ class NoteNode(Node):
     def __init__(self, note, indent=1):
         super(NoteNode, self).__init__(indent)
 
-        self.note = note
-        self.notebookGuid = note.notebookGuid
-        self.setTitle(note.title)
+        self.note  = note
+        self.title = None
+        self.refresh()
+
+    def adapt(self, line):
+        # Was the note renamed?
+        r = re.compile("^\s+"    # leading whitespace
+                       "(.*)"    # note title
+                       "\[.*\]"  # key
+                       ".*$")    # everything else till end of line
+        m = r.match(line)
+        if m:
+            title = m.group(1).strip()
+            if self.title != title:
+                self.setTitle(title)
+                return True
+        return False
 
     def activate(self):
         super(NoteNode, self).activate()
@@ -208,6 +255,16 @@ class NoteNode(Node):
         if self.note.notebookGuid != self.notebookGuid:
             self.note.notebookGuid = self.notebookGuid
             GeeknoteUpdateNote(self.note)
+
+    def getGuid(self):
+        return self.note.guid
+
+    def refresh(self):
+        if self.title is not None:
+            self.note = GeeknoteRefreshNoteMeta(self.note)
+
+        self.notebookGuid = self.note.notebookGuid
+        self.setTitle(self.note.title)
 
     def getGuid(self):
         return self.note.guid
@@ -271,12 +328,13 @@ class TagNode(Node):
             line = '-'
 
         line += ' ' + self.name
-        self.prefWidth = len(line)
-
         if numNotes != 0:
             line += ' (%d)' % numNotes
 
+        self.prefWidth = len(line)
+
         buffer.append('{:<50} [{}]'.format(line, self.getKey()))
+
         self.row = len(buffer)
 
         if self.expanded:
@@ -304,7 +362,7 @@ class Explorer(object):
                 self.dataFile.name, 
                 ':call Vim_GeeknoteCommitStart()')
 
-        autocmd('BufWritePre' , 
+        autocmd('BufWritePost', 
                 self.dataFile.name, 
                 ':call Vim_GeeknoteCommitComplete()')
 
@@ -328,9 +386,10 @@ class Explorer(object):
             vim.current.window.cursor = (row, col)
 
     def addNote(self, note):
-        node = getNodeByInstance(note.notebookGuid, 0)
-        node = node.addNote(note) 
+        notebook = getNodeByInstance(note.notebookGuid, 0)
+        notebook.expand()
 
+        node = notebook.addNote(note) 
         self.selectNode(node)
 
     def addNotebook(self, notebook):
@@ -350,74 +409,64 @@ class Explorer(object):
         registerNode(tagNode)
 
     def applyChanges(self):
-        if isBufferModified(self.buffer.number) is False:
-            return
-
         for row in xrange(len(self.buffer)):
             line = self.buffer[row]
+            key  = self.getNodeKey(line)
+            if key is not None:
+                node = getNode(key)
 
-            # Look for changes to notes.
-            r = re.compile('^\s+(.+)\[(.+)\]$')
-            m = r.match(line)
-            if m: 
-                title = m.group(1).strip()
-                key   = m.group(2)
-                node  = getNode(key)
+                # Adapt the node based on it's current text.
+                modified = node.adapt(line)
+
+                # If the node represents a note, check to see if it was moved.
                 if isinstance(node       , NoteNode) and \
                    isinstance(node.parent, NotebookNode):
+                    parent = self.getNodeParent(row)
+                    if (node.parent != parent):
+                        node.notebookGuid = parent.notebook.guid
+                        parent.expand()
 
-                    # Did the user change the note's title?
-                    if title != node.title:
-                        node.setTitle(title)
-                        if node not in self.modifiedNodes:
-                            self.modifiedNodes.append(node)
+                        node.parent.removeChild(node)
+                        parent.addChild(node)
 
-                    # Did the user move the note into a different notebook?
-                    newParent = self.findNotebookForNode(row)
-                    if newParent is not None:
-                        if newParent.notebook.guid != node.notebookGuid:
-                            oldParent = node.parent
-                            node.notebookGuid = newParent.notebook.guid
+                        modified = True
 
-                            newParent.expand()
-                            newParent.addChild(node)
-                            oldParent.removeChild(node)
-
-                            if node not in self.modifiedNodes:
-                                self.modifiedNodes.append(node)
-                continue
-
-            # Look for changes to notebooks.
-            r = re.compile('^[\+-](.+)\[(.+)\]$')
-            m = r.match(line)
-            if m:
-                name = m.group(1).strip()
-                key  = m.group(2)
-                node = getNode(key)
-                if isinstance(node, NotebookNode):
-                    if name != node.name:
-                        node.setName(name)
+                if modified:
+                    if node not in self.modifiedNodes:
                         self.modifiedNodes.append(node)
-                continue
 
     def commitChanges(self):
-        self.applyChanges()
+        if isBufferModified(self.buffer.number):
+            self.applyChanges()
+
         for node in self.modifiedNodes:
             node.commitChanges()
+
+        for node in self.modifiedNodes:
+            for key in registry:
+                tempNode = getNode(key)
+                if tempNode.getGuid() == node.getGuid():
+                    if tempNode.getKey() != node.getKey():
+                        tempNode.refresh()
+
         del self.modifiedNodes[:]
 
-    #
-    # Search upwards, starting at the given row number and return the first
-    # note nodebook found. 
-    #
-    def findNotebookForNode(self, nodeRow):
-        while nodeRow > 0:
-            key = self.getNodeKey(self.buffer[nodeRow])
+    def getNodeParent(self, row):
+        key  = self.getNodeKey(self.buffer[row])
+        node = getNode(key)
+
+        # Only notes have parents
+        if not isinstance(node, NoteNode):
+            return None
+
+        while row > 0:
+            key = self.getNodeKey(self.buffer[row])
             if key is not None: 
                 node = getNode(key)
-                if isinstance(node, NotebookNode):
+                if not isinstance(node, NoteNode):
                     return node
-            nodeRow -= 1
+            row -= 1
+
         return None
 
     def getSelectedNotebook(self):
@@ -523,7 +572,8 @@ class Explorer(object):
         # by the user. Do not synchronize them yet with the server, just make
         # sure they are not lost.
         #
-        self.applyChanges()
+        if isBufferModified(self.buffer.number):
+            self.applyChanges()
 
         # Clear the navigation buffer to get rid of old content (if any).
         del self.buffer[:]
