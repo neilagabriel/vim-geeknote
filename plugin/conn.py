@@ -60,6 +60,9 @@ def GeeknoteGetTags():
 def GeeknoteLoadNote(note):
     return noteStore.getNote(authToken, note.guid, True, False, False, False)
 
+def GeeknoteRefreshNoteMeta(note):
+    return noteStore.getNote(authToken, note.guid, False, False, False, False)
+
 def GeeknoteUpdateNote(note):
     noteStore.updateNote(authToken, note)
 
