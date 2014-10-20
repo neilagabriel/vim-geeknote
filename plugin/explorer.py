@@ -128,19 +128,23 @@ class NotebookNode(Node):
                            "(?:\s+)?" # optional whitespace
                            "(.*)"     # notebook name
                            "\(\d+\)"  # note count
-                           ".*$")     # guid till end of line
+                           "(?:\s+)?" # optional whitespace
+                           "\[.*\]"   # key
+                           ".*$")     # everything else till end of line
         else:
             r = re.compile("^[+-]"    # match +/- character at start of line
                            "(?:\s+)?" # optional whitespace
                            "(.*)"     # notebook name
-                           "\[.*\]"   # guid
+                           "\[.*\]"   # key
                            ".*$")     # everything else till end of line
 
         m = r.match(line)
         if m:
             name = m.group(1).strip()
-            self.setName(name)
-            return True
+            if self.name != name:
+                print "Detected notebook rename: '%s' -> '%s'" % (self.name, name)
+                self.setName(name)
+                return True
 
         return False
 
@@ -152,9 +156,9 @@ class NotebookNode(Node):
         return node
 
     def commitChanges(self):
-        if self.notebook.name != self.name:
-            self.notebook.name = self.name
-            GeeknoteUpdateNotebook(self.notebook)
+        print "Renaming notebook '%s' to '%s'" % (self.notebook.name, self.name)
+        self.notebook.name = self.name
+        GeeknoteUpdateNotebook(self.notebook)
 
     def expand(self):
         if self.loaded is False:
@@ -214,7 +218,7 @@ class NoteNode(Node):
     def adapt(self, line):
         r = re.compile("^\s+"    # leading whitespace
                        "(.*)"    # note title
-                       "\[.*\]"  # guid
+                       "\[.*\]"  # key
                        ".*$")    # everything else till end of line
 
         m = r.match(line)
@@ -414,10 +418,10 @@ class Explorer(object):
 
         for row in xrange(len(self.buffer)):
             line = self.buffer[row]
-            guid = self.getNodeGuid(line)
-            if guid is not None:
+            key  = self.getNodeKey(line)
+            if key is not None:
                 parent   = self.getNodeParent(row)
-                node     = registry[guid]
+                node     = getNode(key)
                 modified = node.adapt(line)
 
                 if modified:
@@ -425,7 +429,6 @@ class Explorer(object):
                         self.modifiedNodes.append(node)
 
             # Look for changes to notes.
-<<<<<<< HEAD
             #r = re.compile('^\s+(.+)\[(.+)\]$')
             #m = r.match(line)
             #if m: 
@@ -449,74 +452,44 @@ class Explorer(object):
             #                if node not in self.modifiedNodes:
             #                    self.modifiedNodes.append(node)
             #    continue
-=======
-            r = re.compile('^\s+(.+)\[(.+)\]$')
-            m = r.match(line)
-            if m: 
-                title = m.group(1).strip()
-                key   = m.group(2)
-                node  = getNode(key)
-                if isinstance(node       , NoteNode) and \
-                   isinstance(node.parent, NotebookNode):
-
-                    # Did the user change the note's title?
-                    if title != node.title:
-                        node.setTitle(title)
-                        if node not in self.modifiedNodes:
-                            self.modifiedNodes.append(node)
-
-                    # Did the user move the note into a different notebook?
-                    newParent = self.findNotebookForNode(row)
-                    if newParent is not None:
-                        if newParent.notebook.guid != node.notebookGuid:
-                            oldParent = node.parent
-                            node.notebookGuid = newParent.notebook.guid
-
-                            newParent.expand()
-                            newParent.addChild(node)
-                            oldParent.removeChild(node)
-
-                            if node not in self.modifiedNodes:
-                                self.modifiedNodes.append(node)
-                continue
 
             # Look for changes to notebooks.
-            r = re.compile('^[\+-](.+)\[(.+)\]$')
-            m = r.match(line)
-            if m:
-                name = m.group(1).strip()
-                key  = m.group(2)
-                node = getNode(key)
-                if isinstance(node, NotebookNode):
-                    if name != node.name:
-                        node.setName(name)
-                        self.modifiedNodes.append(node)
-                continue
+            #r = re.compile('^[\+-](.+)\[(.+)\]$')
+            #m = r.match(line)
+            #if m:
+            #    name = m.group(1).strip()
+            #    key  = m.group(2)
+            #    node = getNode(key)
+            #    if isinstance(node, NotebookNode):
+            #        if name != node.name:
+            #            node.setName(name)
+            #            self.modifiedNodes.append(node)
+            #    continue
 
     def commitChanges(self):
         self.applyChanges()
         for node in self.modifiedNodes:
             node.commitChanges()
 
-            for guid in registry:
-                tempNode = registry[guid]
+            for key in registry:
+                tempNode = getNode(key)
                 if tempNode.getGuid() == node.getGuid():
                     tempNode.refresh()
 
         del self.modifiedNodes[:]
 
     def getNodeParent(self, row):
-        guid = self.getNodeGuid(self.buffer[row])
-        node = registry[guid]
+        key  = self.getNodeKey(self.buffer[row])
+        node = getNode(key)
 
         # Only notes have parents
         if not isinstance(node, NoteNode):
             return None
 
         while row > 0:
-            guid = self.getNodeGuid(self.buffer[row])
-            if guid is not None: 
-                node = registry[guid]
+            key = self.getNodeKey(self.buffer[row])
+            if key is not None: 
+                node = getNode(key)
                 if not isinstance(node, NoteNode):
                     return node
             row -= 1
