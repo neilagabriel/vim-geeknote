@@ -74,7 +74,6 @@ def GeeknoteCreateNote(title):
 
     # Add the note to the navigation window.
     explorer.addNote(note)
-    explorer.selectNote(note)
     explorer.render()
 
 def GeeknoteCreateNotebook(name):
@@ -86,7 +85,6 @@ def GeeknoteCreateNotebook(name):
         vim.command('echoerr "Failed to create notebook."')
 
     explorer.addNotebook(notebook)
-    explorer.selectNotebook(notebook)
     explorer.render()
 
 def GeeknoteSaveAsNote():
@@ -140,7 +138,6 @@ def GeeknoteSaveAsNote():
         return
 
     explorer.addNote(note)
-    explorer.selectNote(note)
     explorer.render()
 
     GeeknoteOpenNote(note)
