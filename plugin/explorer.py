@@ -548,16 +548,41 @@ class Explorer(object):
             self.selectNotebook(notebook)
 
     def refreshNotebooks(self):
+        #
+        # If the user already specified which notebooks to load, load just
+        # those notebooks.
+        #
         if int(vim.eval('exists("g:GeeknoteNotebooks")')):
             guids = vim.eval('g:GeeknoteNotebooks')
             for guid in guids:
                 notebook = GeeknoteGetNotebook(guid)
                 if notebook is not None:
                     self.addNotebook(notebook)
-        else:
-            notebooks = GeeknoteGetNotebooks()
+            return
+
+        #
+        # Otherwise, load all notebooks and apply any filters that the user
+        # specified (if any).
+        #
+        notebooks = GeeknoteGetNotebooks()
+        if not int(vim.eval('exists("g:GeeknoteNotebookFilters")')):
             for notebook in notebooks:
                 self.addNotebook(notebook)
+        else:
+            regex = []
+            filters = vim.eval('g:GeeknoteNotebookFilters')
+            for filter in filters:
+                try:
+                    r = re.compile(filter)
+                    regex.append(r)
+                except:
+                    pass
+
+            for notebook in notebooks:
+                for r in regex:
+                    if r.search(notebook.name):
+                        self.addNotebook(notebook)
+                        break
 
     # Render the navigation buffer in the navigation window..
     def render(self):

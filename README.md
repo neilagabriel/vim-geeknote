@@ -81,6 +81,8 @@ overrides all other width-related options.
 
 #### Limit View to Specific Notebooks
 
+##### By GUID
+
 By default, all notebooks will be shown in the navigation window. Depending on
 the number notebooks you have, this can add a non-trivial amount of time to the
 load time of the plugin. You may also simply not want to see your full set of
@@ -91,6 +93,20 @@ a specific notebook or set of notebooks:
     \    [
     \        'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeee', 
     \        'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeee', 
+    \    ]
+
+##### By Expression
+
+Notebooks can also be filtered by expressions. Use the following option to
+specify a list of regular expressions to apply to each notebook to decide if it
+should be included in the navigation window. Unlike filtering by GUID, this
+option does *not* yield a performance improvement. In fact, it may slightly
+degrade it depending on the number of expressions you specify.
+
+    let g:GeeknoteNotebookFilters=
+    \    [
+    \        'Unsorted'          ,
+    \        '^Status - WW(\d+)$',
     \    ]
 
 ### Launching

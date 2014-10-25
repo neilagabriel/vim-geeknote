@@ -66,7 +66,7 @@ your notes.
 
 3. Navigation Window Behavior
 
-3a. Limit Width
+3.a. Limit Width
 
 By default, vim-geeknote will attempt to resize the navigation window based on
 its current content. If you have notebooks or notes with very long names you
@@ -76,7 +76,7 @@ may want to use the following option to cap the size of the window:
 
 Where `<value>` is replaced with the max width of the window.
 
-3b. Fix Width
+3.b. Fix Width
 
 Use the following option to fix the width of the window to a specific value:
 
@@ -85,7 +85,9 @@ Use the following option to fix the width of the window to a specific value:
 Where `<value>` is replaced with the desired width of the window. This option
 overrides all other width-related options.
 
-3c. Limit View to Specific Notebooks
+3.c. Limit View to Specific Notebooks
+
+3.c.1 By GUID
 
 By default, all notebooks will be shown in the navigation window. Depending on
 the number notebooks you have, this can add a non-trivial amount of time to the
@@ -99,14 +101,28 @@ a specific notebook or set of notebooks:
     \        'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeee', 
     \    ]
 
-3d. Launching
+3.c.2 By Expression
+
+Notebooks can also be filtered by expressions. Use the following option to
+specify a list of regular expressions to apply to each notebook to decide if it
+should be included in the navigation window. Unlike filtering by GUID, this
+option does *not* yield a performance improvement. In fact, it may slightly
+degrade it depending on the number of expressions you specify.
+
+    let g:GeeknoteNotebookFilters=
+    \    [
+    \        'Unsorted'          ,
+    \        '^Status - WW(\d+)$',
+    \    ]
+
+3.d. Launching
 
 It may sometimes be convenient to launch geeknote in a new instance of Vim. An
 alias can be helpful for this. Here an example for `bash`:
 
     alias vim-geeknote='vi -c Geeknote'
 
-3e. Geeknote Autocommands
+3.e. Geeknote Autocommands
 
 vim-geeknote uses FileType `geeknote` for the navigation window. This can be to
 set your own custom behavior. For example, the following code may be used to
