@@ -118,9 +118,9 @@ alias can be helpful for this. Here an example for `bash`:
 
 ### Geeknote Autocommands
 
-vim-geeknote uses FileType `geeknote` for the navigation window. This can be to
-set your own custom behavior. For example, the following code may be used to
-disable line numbers in the navigation window:
+vim-geeknote uses FileType `geeknote` for the navigation window. This may be
+used to set your own custom behavior. For example, the following code may be
+used to disable line numbers in the navigation window:
 
     autocmd FileType geeknote setlocal nonumber
 
