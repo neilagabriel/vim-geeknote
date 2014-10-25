@@ -185,7 +185,8 @@ will not be updated. Support for this will be added in future releases.
 ## Todo
 
 - Refresh open notes upon `:GeeknoteSync`
-- Tag support
+- Complete tag support (adding tags, applying/removing to/from notes)
+- Customizable note display
 - Prettier navigation window
 - Improved notebook creation process
 
