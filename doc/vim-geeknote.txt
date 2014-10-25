@@ -124,9 +124,9 @@ alias can be helpful for this. Here an example for `bash`:
 
 3.e. Geeknote Autocommands
 
-vim-geeknote uses FileType `geeknote` for the navigation window. This can be to
-set your own custom behavior. For example, the following code may be used to
-disable line numbers in the navigation window:
+vim-geeknote uses FileType `geeknote` for the navigation window. This may be
+used to set your own custom behavior. For example, the following disables line
+numbers in the navigation window:
 
     autocmd FileType geeknote setlocal nonumber
 
@@ -165,8 +165,8 @@ will create and switch to a new buffer.
 
 RENAMING NOTEBOOKS AND NOTES
 
-To rename notebooks or notes, simply modify the the name of the notebook/note
-in the navigation window and save the bugger (e.g. `:w`). Any number of changes
+To rename notebooks or notes, simply modify the name of the notebook/note in
+the navigation window and save the bugger (e.g. `:w`). Any number of changes
 can be made before saving, but be sure not to modify an item's GUID.
 
 MOVING NOTES                                        *vim-geeknote-moving-notes*
