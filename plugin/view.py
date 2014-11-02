@@ -87,6 +87,22 @@ def GeeknoteNoteIsOpened(note):
 # Open a note in the active window.
 def GeeknoteOpenNote(note):
     #
+    # Determine which window to display the note in (creating one if necessary)
+    # and switch to that window.
+    #
+    origWin = getActiveWindow()
+    prevWin = getPreviousWindow()
+
+    setActiveWindow(prevWin)
+    isPrevUsable = GeeknoteIsWindowUsable(prevWin)
+    if isPrevUsable is False:
+        firstUsableWin = GeeknoteGetFirstUsableWindow()
+        if firstUsableWin != -1:
+            setActiveWindow(firstUsableWin)
+        else:
+            vim.command('vertical new')
+
+    #
     # Check to see if the note is already opened before opening it in a new
     # buffer.
     #
@@ -151,8 +167,63 @@ def GeeknoteOpenNote(note):
     vim.current.buffer.options['filetype'] = 'markdown'
     vim.command('setlocal syntax=markdown')
 
+    # Now restore the original window.
+    setActiveWindow(origWin)
+
 def GeeknotePrepareToSaveNote(filename):
     filename = os.path.abspath(filename)
     tracker  = openNotes[filename]
     tracker.modified = tracker.buffer.options['modified']
+
+def GeeknoteGetFirstUsableWindow():
+   wnum = 1
+   while wnum <= winnr('$'):
+       bnum         = winbufnr(wnum)
+       buftype      = getBufferVariable(bnum, 'buftype')
+       isModified   = getBufferVariable(bnum, 'modified')
+       isPreviewWin = getWindowVariable(wnum, 'previewwindow')
+       name         = getBufferName(bnum)
+
+       if ((bnum != -1)                 and 
+           (buftype == '')              and
+           (name == '')                 and
+           (isPreviewWin is False)      and
+           ((isModified  is False)      or 
+               hidden())):
+           return wnum
+       wnum += 1
+   return -1
+
+
+def GeeknoteIsWindowUsable(wnum):
+    if winnr('$') == 1:
+        return False
+
+    bnum    = vim.windows[wnum-1].buffer.number
+    buftype = getBufferVariable(bnum, 'buftype')
+    preview = getWindowVariable(wnum, 'previewwindow')
+
+    #
+    # If the window's buffer has a special type or is the preview window, it is
+    # not usable.
+    #
+    if (buftype != '') or (preview is True):
+        return False
+
+    # If the user has the 'hidden' option set, the window is usable.
+    if hidden():
+        return True
+
+    #
+    # If the window's buffer belongs to an unmodified note, the window is
+    # usable.
+    #
+    name = getBufferName(bnum)
+    if name in openNotes:
+        isModified = getBufferVariable(bnum, 'modified')
+        if isModified is False:
+            return True
+
+    # If the buffer is open in more than one window, the window is usable.
+    return bufInWindows(winbufnr(wnum)) > 1
 

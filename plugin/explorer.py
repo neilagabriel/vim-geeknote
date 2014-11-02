@@ -231,21 +231,7 @@ class NoteNode(Node):
     def activate(self):
         super(NoteNode, self).activate()
 
-        # TODO: move all of this into view.py
-        origWin        = getActiveWindow()
-        prevWin        = getPreviousWindow()
-        firstUsableWin = getFirstUsableWindow()
-        isPrevUsable   = isWindowUsable(prevWin)
-        
-        setActiveWindow(prevWin)
-        if (isPrevUsable is False) and (firstUsableWin == -1):
-            vim.command('botright vertical new')
-        elif isPrevUsable is False:
-            setActiveWindow(firstUsableWin)
-
         GeeknoteOpenNote(self.note)
-        setActiveWindow(origWin)
-        return
 
     def commitChanges(self):
         if self.note.title != self.title:
@@ -515,7 +501,6 @@ class Explorer(object):
         setWindowVariable(wnum, 'wrap'       , False)
         setWindowVariable(wnum, 'cursorline' , True)
         setBufferVariable(bnum, 'swapfile'   , False)
-        setBufferVariable(bnum, 'buftype'    , 'quickfix')
         setBufferVariable(bnum, 'bufhidden'  , 'hide')
 
         vim.command('setfiletype geeknote')

@@ -54,14 +54,6 @@ def GeeknoteCreateNote(title):
     # Cleanup the title of the note.
     title = title.strip('"\'')
 
-    # Find a good place to open a new window for the note content.
-    origWin = getActiveWindow()
-    if isWindowUsable(origWin) is False:
-        prevWin = getPreviousWindow()
-        setActiveWindow(prevWin)
-        if isWindowUsable(prevWin) is False:
-            vim.command('botright vertical new')
-
     # Finally, create and open a blank note.
     note              = Types.Note()
     note.title        = title

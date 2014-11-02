@@ -68,6 +68,9 @@ def bufInWindows(bnum):
          winnum = winnum + 1
      return cnt
 
+def getBufferName(bnum):
+    return vim.buffers[bnum].name
+
 def getBufferVariable(bnum, var):
     return vim.buffers[bnum].options[var]
  
@@ -80,38 +83,5 @@ def setBufferVariable(bnum, var, value):
 def setWindowVariable(wnum, var, value):
     vim.windows[wnum-1].options[var] = value
 
-def getFirstUsableWindow():
-    wnum = 1
-    while wnum <= winnr('$'):
-        bnum         = winbufnr(wnum)
-        buftype      = getBufferVariable(bnum, 'buftype')
-        isModified   = getBufferVariable(bnum, 'modified')
-        isPreviewWin = getWindowVariable(wnum, 'previewwindow')
-
-        if ((bnum != -1)            and 
-            (buftype == '')         and
-            (isPreviewWin is False) and
-            ((isModified  is False) or hidden())):
-            return wnum
-        wnum += 1
-    return -1
-
 def isBufferModified(bnum):
     return getBufferVariable(bnum, 'modified')
-
-def isWindowUsable(wnum):
-    if winnr('$') == 1:
-        return False
-
-    bnum    = vim.windows[wnum-1].buffer.number
-    buftype = getBufferVariable(bnum, 'buftype')
-    preview = getWindowVariable(wnum, 'previewwindow')
-
-    if buftype != '' or preview is True:
-        return False
-
-    if hidden():
-        return True
-
-    isModified = getBufferVariable(bnum, 'modified')
-    return (isModified is False) or (bufInWindows(winbufnr(wnum)) >= 2)
