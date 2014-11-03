@@ -134,6 +134,13 @@ def GeeknoteSaveAsNote():
 
     GeeknoteOpenNote(note)
 
+def GeeknoteSearch(args):
+    notes = GeeknoteGetNotes(args)
+
+    explorer.clearSearchResults()
+    explorer.addSearchResults(notes)
+    explorer.render()
+
 def GeeknoteSaveNote(filename):
     note    = GeeknoteGetOpenNote(filename)
     changed = GeeknoteCommitChangesToNote(note)

@@ -339,6 +339,7 @@ class Explorer(object):
         self.dataFile      = None
         self.buffer        = None
         self.expandState   = {}
+        self.searchResults = []
 
         self.refresh()
 
@@ -387,6 +388,12 @@ class Explorer(object):
 
         self.selectNode(node)
 
+    def addSearchResults(self, results):
+        for note in results:
+            node = NoteNode(note, 0)
+            registerNode(node)
+            self.searchResults.append(node)
+
     def addTag(self, tag):
         tagNode = TagNode(tag)
         self.tags.append(tagNode)
@@ -420,6 +427,9 @@ class Explorer(object):
                 if modified:
                     if node not in self.modifiedNodes:
                         self.modifiedNodes.append(node)
+
+    def clearSearchResults(self):
+        del self.searchResults[:]
 
     def commitChanges(self):
         if isBufferModified(self.buffer.number):
@@ -591,18 +601,27 @@ class Explorer(object):
         # Prepare the new content and append it to the navigation buffer.
         content = []
         content.append('Notebooks:')
-        content.append('{:=^90}'.format('='))
+        content.append('{:=^92}'.format('='))
 
-        # Render notebooks, notes, and tags
+        # Render notebooks, notes, tags, and search results
         for node in self.notebooks:
             node.render(content)
 
-        content.append('')
-        content.append('Tags:')
-        content.append('{:=^90}'.format('='))
+        if len(self.tags) > 0:
+            content.append('')
+            content.append('Tags:')
+            content.append('{:=^92}'.format('='))
 
-        for node in self.tags:
-            node.render(content)
+            for node in self.tags:
+                node.render(content)
+
+        if len(self.searchResults) > 0:
+             content.append('')
+             content.append('Search Results:')
+             content.append('{:=^92}'.format('='))
+
+             for node in self.searchResults:
+                 node.render(content)
 
         # Write the content list to the buffer starting at row zero.
         self.buffer.append(content, 0)

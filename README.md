@@ -176,6 +176,11 @@ Use `:GeeknoteSync` to update the navigation with the latest data on the
 Evernote server. Warning, any notes that are opened when this command is issued
 will not be updated. Support for this will be added in future releases.
 
+### Searching
+
+Use `:GeeknoteSearch <text>` to search for notes with specific `text` in their
+titles' and/or content. All results will be added to the nagivation window.
+
 ## Acknowledgments
 
 - [Geeknote](http://www.geeknote.me)
