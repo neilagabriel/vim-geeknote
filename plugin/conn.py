@@ -35,8 +35,8 @@ def GeeknoteGetNotes(searchWords=""):
     
     while ((result.totalNotes != len(result.notes)) and count != 0):
         offset = len(result.notes)
-        result.notes = noteStore.findNotesMetadata(
-            authToken, filter, offset, count, meta)
+        result.notes += noteStore.findNotesMetadata(
+            authToken, filter, offset, count, meta).notes
         count = update_count(count)
 
     notes = []
