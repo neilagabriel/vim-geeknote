@@ -6,6 +6,19 @@ from view  import *
 from utils import *
 from conn  import *
 
+#======================== Global Setup/Config ================================#
+
+ExplorerCharOpened = u'\u25bd'
+ExplorerCharClosed = u'\u25b6'
+
+if int(vim.eval('exists("g:GeeknoteExplorerNodeOpened")')):
+    ExplorerCharOpened = vim.eval(
+        'g:GeeknoteExplorerNodeOpened').decode('utf8')
+
+if int(vim.eval('exists("g:GeeknoteExplorerNodeClosed")')):
+    ExplorerCharClosed = vim.eval(
+        'g:GeeknoteExplorerNodeClosed').decode('utf8')
+
 #======================== Registry ===========================================#
 
 #
@@ -124,18 +137,18 @@ class NotebookNode(Node):
 
     def adapt(self, line):
         if len(self.children) > 0:
-            r = re.compile("^[+-]"    # match +/- character at start of line
+            r = re.compile("^\S+"     # match leading non-whitespace characters 
                            "(?:\s+)?" # optional whitespace
                            "(.*)"     # notebook name
                            "\(\d+\)"  # note count
                            "(?:\s+)?" # optional whitespace
-                           "\[.*\]"   # key
+                           "N\[.*\]"  # key
                            ".*$")     # everything else till end of line
         else:
-            r = re.compile("^[+-]"    # match +/- character at start of line
+            r = re.compile("^\S+"     # match leading non-whitespace characters
                            "(?:\s+)?" # optional whitespace
                            "(.*)"     # notebook name
-                           "\[.*\]"   # key
+                           "N\[.*\]"  # key
                            ".*$")     # everything else till end of line
 
         m = r.match(line)
@@ -144,6 +157,8 @@ class NotebookNode(Node):
             if self.name != name:
                 self.setName(name)
                 return True
+        else:
+            print line
 
         return False
 
@@ -180,21 +195,22 @@ class NotebookNode(Node):
     def render(self, buffer):
         numNotes = len(self.children)
 
-        if self.expanded is False:
-            if self.loaded and numNotes == 0:
-                line = '-'
-            else:
-                line = '+'
+        if self.expanded:
+            line = ExplorerCharOpened
         else:
-            line = '-'
+            if self.loaded and numNotes == 0:
+                line = ExplorerCharOpened
+            else:
+                line = ExplorerCharClosed
 
-        line += ' ' + self.name
+        line += ' ' + self.name.decode('utf8')
         if numNotes != 0:
             line += ' (%d)' % numNotes
 
+        line = line.encode('utf8')
         self.prefWidth = len(line)
 
-        buffer.append('{:<50} [{}]'.format(line, self.getKey()))
+        buffer.append('{:<50} N[{}]'.format(line, self.getKey()))
         self.row = len(buffer)
 
         if self.expanded:
@@ -218,7 +234,7 @@ class NoteNode(Node):
         # Was the note renamed?
         r = re.compile("^\s+"    # leading whitespace
                        "(.*)"    # note title
-                       "\[.*\]"  # key
+                       "n\[.*\]" # key
                        ".*$")    # everything else till end of line
         m = r.match(line)
         if m:
@@ -257,11 +273,11 @@ class NoteNode(Node):
 
     def render(self, buffer):
         line  = ' ' * (self.indent * 4)
-        line += self.title
+        line += self.title.decode('utf8')
 
         self.prefWidth = len(line)
 
-        line = '{:<50} [{}]'.format(line, self.getKey())
+        line = '{:<48} n[{}]'.format(line, self.getKey())
         buffer.append(line)
         self.row = len(buffer)
 
@@ -305,21 +321,22 @@ class TagNode(Node):
     def render(self, buffer):
         numNotes = len(self.children)
 
-        if self.expanded is False:
-            if self.loaded and numNotes == 0:
-                line = '-'
-            else:
-                line = '+'
+        if self.expanded:
+            line = ExplorerCharOpened
         else:
-            line = '-'
+            if self.loaded and numNotes == 0:
+                line = ExplorerCharOpened
+            else:
+                line = ExplorerCharClosed
 
-        line += ' ' + self.name
+        line += ' ' + self.name.decode('utf8')
         if numNotes != 0:
             line += ' (%d)' % numNotes
 
+        line = line.encode('utf8')
         self.prefWidth = len(line)
 
-        buffer.append('{:<50} [{}]'.format(line, self.getKey()))
+        buffer.append('{:<50} T[{}]'.format(line, self.getKey()))
 
         self.row = len(buffer)
 

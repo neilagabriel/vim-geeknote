@@ -115,14 +115,24 @@ degrade it depending on the number of expressions you specify.
     \        '^Status - WW(\d+)$',
     \    ]
 
-3.d. Launching
+3.d Explorer Special Characters
+
+The following options may be used to customize the characters used to denote
+opened/closed notebooks and tags:
+
+    let g:GeeknoteExplorerNodeClosed = '+'
+    let g:GeeknoteExplorerNodeOpened = '-'
+
+Both unicode and ascii characters are supported.
+
+4. Launching
 
 It may sometimes be convenient to launch geeknote in a new instance of Vim. An
 alias can be helpful for this. Here an example for `bash`:
 
     alias vim-geeknote='vi -c Geeknote'
 
-3.e. Geeknote Autocommands
+5. Geeknote Autocommands
 
 vim-geeknote uses FileType `geeknote` for the navigation window. This may be
 used to set your own custom behavior. For example, the following disables line
@@ -198,7 +208,6 @@ titles' and/or content. All results will be added to the nagivation window.
 - Refresh open notes upon `:GeeknoteSync`
 - Complete tag support (adding tags, applying/removing to/from notes)
 - Customizable note display
-- Prettier navigation window
 - Improved notebook creation process
 
 7. License                                               *vim-geeknote-license*

@@ -109,6 +109,16 @@ degrade it depending on the number of expressions you specify.
     \        '^Status - WW(\d+)$',
     \    ]
 
+#### Explorer Special Characters
+
+The following options may be used to customize the characters used to denote
+opened/closed notebooks and tags:
+
+    let g:GeeknoteExplorerNodeClosed = '+'
+    let g:GeeknoteExplorerNodeOpened = '-'
+
+Both unicode and ascii characters are supported.
+
 ### Launching
 
 It may sometimes be convenient to launch geeknote in a new instance of Vim. An
@@ -192,7 +202,6 @@ titles' and/or content. All results will be added to the nagivation window.
 - Refresh open notes upon `:GeeknoteSync`
 - Complete tag support (adding tags, applying/removing to/from notes)
 - Customizable note display
-- Prettier navigation window
 - Improved notebook creation process
 
 ## License
