@@ -151,8 +151,8 @@ def GeeknoteSaveNote(filename):
             GeeknoteHandleNoteSaveFailure(note, e)
 
 def GeeknoteHandleNoteSaveFailure(note, e):
-    msg  = '%s\n' % e
-    msg += '+------------------- WARNING -------------------+\n'
+    print e
+    msg  = '+------------------- WARNING -------------------+\n'
     msg += '|                                               |\n'
     msg += '| Failed to save note (see error above)         |\n'
     msg += '|                                               |\n'

@@ -41,6 +41,7 @@ def textToENML(content):
 
     content = content.replace('<', '&lt;')
     content = content.replace('>', '&gt;')
+    content = content.replace('&', '&amp;')
     content = unicode(content, "utf-8")
     contentHTML = u''.join(('<pre>', content, '</pre>')).encode("utf-8")
 
