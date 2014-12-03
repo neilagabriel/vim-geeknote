@@ -132,6 +132,16 @@ alias can be helpful for this. Here an example for `bash`:
 
     alias vim-geeknote='vi -c Geeknote'
 
+5. Powerline
+
+Powerline may be used to improve the look of the navigation window as well as
+any notes that you open. At this time however, if you'd like this support,
+you'll need to use my personal powerline fork locate here:
+
+    https://github.com/neilagabriel/powerline.git
+
+Just install it in the normal fashion and everything should just work.
+
 5. Geeknote Autocommands
 
 vim-geeknote uses FileType `geeknote` for the navigation window. This may be
