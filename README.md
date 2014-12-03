@@ -109,7 +109,7 @@ degrade it depending on the number of expressions you specify.
     \        '^Status - WW(\d+)$',
     \    ]
 
-#### Explorer Special Characters
+### Explorer Special Characters
 
 The following options may be used to customize the characters used to denote
 opened/closed notebooks and tags:
@@ -125,6 +125,16 @@ It may sometimes be convenient to launch geeknote in a new instance of Vim. An
 alias can be helpful for this. Here an example for `bash`:
 
     alias vim-geeknote='vi -c Geeknote'
+
+### Powerline
+
+Powerline may be used to improve the look of the navigation window as well as
+any notes that you open. At this time however, if you'd like this support,
+you'll need to use my personal powerline fork locate here:
+
+    https://github.com/neilagabriel/powerline.git
+
+Just install it in the normal fashion and everything should just work.
 
 ### Geeknote Autocommands
 

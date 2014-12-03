@@ -360,7 +360,8 @@ class Explorer(object):
 
         self.refresh()
 
-        self.dataFile = tempfile.NamedTemporaryFile(delete=True)
+        self.dataFile = tempfile.NamedTemporaryFile(
+            prefix='__GeeknoteExplorer__', delete=True)
 
         autocmd('BufWritePre' , 
                 self.dataFile.name, 

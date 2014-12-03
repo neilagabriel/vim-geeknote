@@ -114,7 +114,8 @@ def GeeknoteOpenNote(note):
         content = tools.stdoutEncode(content)
 
         # Write the note's title and content to a temporary file.
-        f = tempfile.NamedTemporaryFile(delete=False)
+        f = tempfile.NamedTemporaryFile(prefix='__Geeknote__', delete=False)
+
         f.write(note.title + '\n\n')
         
         isNoteEmpty = not content.strip()
@@ -149,6 +150,10 @@ def GeeknoteOpenNote(note):
         autocmd('BufDelete',
                 f.name, 
                 ':call Vim_GeeknoteCloseNote("{}")'.format(f.name))
+
+        vim.command("let b:GeeknoteTitle=\"%s\"" % note.title)
+        notebook = GeeknoteGetNotebook(note.notebookGuid)
+        vim.command("let b:GeeknoteNotebook=\"%s\"" % notebook.name)
     #
     # Otherwise, the note has aleady been opened. Simply switch the active window
     # to the note's buffer.
