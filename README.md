@@ -27,7 +27,7 @@ Integrates Geeknote/Evernote into Vim.
 
 * [Vundle](https://github.com/gmarik/vundle)
    * Add `Bundle 'https://github.com/neilagabriel/vim-geeknote'` to .vimrc
-   * Run `:BundeInstall`
+   * Run `:BundleInstall`
 * [Pathogen](https://github.com/tpope/vim-pathogen)
    * `git clone https://github.com/neilagabriel/vim-geeknote ~/.vim/bundle/vim-geeknote`
 
