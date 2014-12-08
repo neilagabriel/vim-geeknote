@@ -15,7 +15,7 @@ Integrates Geeknote/Evernote into Vim.
 ## Dependencies/Requirements
 
 - Vim 7.4.364 or newer (issues observed with earlier versions)
-- Linux (not tested on operating systems)
+- Linux or OSX (not tested on Windows)
 
 ## Installation
 
@@ -30,6 +30,8 @@ Integrates Geeknote/Evernote into Vim.
    * Run `:BundeInstall`
 * [Pathogen](https://github.com/tpope/vim-pathogen)
    * `git clone https://github.com/neilagabriel/vim-geeknote ~/.vim/bundle/vim-geeknote`
+
+3. If using macvim refer to README_mac.md for additional instructions.
 
 ## Optional Setup and Configuration
 
