@@ -31,7 +31,7 @@ Integrates Geeknote/Evernote into Vim.
 * [Pathogen](https://github.com/tpope/vim-pathogen)
    * `git clone https://github.com/neilagabriel/vim-geeknote ~/.vim/bundle/vim-geeknote`
 
-3. If using macvim refer to README_mac.md for additional instructions.
+3. If using macvim refer to [README_mac.md](README_mac.md) for additional instructions.
 
 ## Optional Setup and Configuration
 
