@@ -275,6 +275,7 @@ class NoteNode(Node):
         line  = ' ' * (self.indent * 4)
         line += self.title.decode('utf8')
 
+        line = line.encode('utf8')
         self.prefWidth = len(line)
 
         line = '{:<48} n[{}]'.format(line, self.getKey())
