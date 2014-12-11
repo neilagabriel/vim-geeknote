@@ -34,8 +34,11 @@ explorer = Explorer()
 def GeeknoteActivateNode():
     explorer.activateNode(vim.current.line)
 
-def GeeknoteTerminate():
-    GeeknoteCloseAllNotes()
+def GeeknoteCommitStart():
+    explorer.commitChanges()
+
+def GeeknoteCommitComplete():
+    explorer.render()
 
 def GeeknoteCreateNote(title):
     #
@@ -66,7 +69,6 @@ def GeeknoteCreateNote(title):
 
     # Add the note to the navigation window.
     explorer.addNote(note)
-    explorer.render()
 
 def GeeknoteCreateNotebook(name):
     notebook = Types.Notebook()
@@ -77,7 +79,17 @@ def GeeknoteCreateNotebook(name):
         vim.command('echoerr "Failed to create notebook."')
 
     explorer.addNotebook(notebook)
-    explorer.render()
+
+def GeeknoteHandleNoteSaveFailure(note, e):
+    print e
+    msg  = '+------------------- WARNING -------------------+\n'
+    msg += '|                                               |\n'
+    msg += '| Failed to save note (see error above)         |\n'
+    msg += '|                                               |\n'
+    msg += '| Save buffer to a file to avoid losing content |\n'
+    msg += '|                                               |\n'
+    msg += '+------------------- WARNING -------------------+\n'
+    vim.command('echoerr "%s"' % msg)
 
 def GeeknoteSaveAsNote():
     global explorer
@@ -129,17 +141,10 @@ def GeeknoteSaveAsNote():
         GeeknoteHandleNoteSaveFailure(note, e)
         return
 
-    explorer.addNote(note)
-    explorer.render()
-
     GeeknoteOpenNote(note)
 
-def GeeknoteSearch(args):
-    notes = GeeknoteGetNotes(args)
-
-    explorer.clearSearchResults()
-    explorer.addSearchResults(notes)
-    explorer.render()
+    # Add the note to the navigation window.
+    explorer.addNote(note)
 
 def GeeknoteSaveNote(filename):
     note    = GeeknoteGetOpenNote(filename)
@@ -150,27 +155,20 @@ def GeeknoteSaveNote(filename):
         except Exception as e:
             GeeknoteHandleNoteSaveFailure(note, e)
 
-def GeeknoteHandleNoteSaveFailure(note, e):
-    print e
-    msg  = '+------------------- WARNING -------------------+\n'
-    msg += '|                                               |\n'
-    msg += '| Failed to save note (see error above)         |\n'
-    msg += '|                                               |\n'
-    msg += '| Save buffer to a file to avoid losing content |\n'
-    msg += '|                                               |\n'
-    msg += '+------------------- WARNING -------------------+\n'
-    vim.command('echoerr "%s"' % msg)
+def GeeknoteSearch(args):
+    notes = GeeknoteGetNotes(args)
+
+    explorer.clearSearchResults()
+    explorer.addSearchResults(notes)
+    explorer.render()
 
 def GeeknoteSync():
     explorer.commitChanges()
     explorer.refresh()    
     explorer.render()
 
-def GeeknoteCommitStart():
-    explorer.commitChanges()
-
-def GeeknoteCommitComplete():
-    explorer.render()
+def GeeknoteTerminate():
+    GeeknoteCloseAllNotes()
 
 def GeeknoteToggle():
     global explorer

@@ -178,9 +178,9 @@ class NotebookNode(Node):
             del self.children[:]
 
             notes = self.getNotes()
-
             for note in notes:
                 self.addNote(note)
+
             self.loaded = True
 
         super(NotebookNode, self).expand()
@@ -393,18 +393,34 @@ class Explorer(object):
 
     def addNote(self, note):
         notebook = getNodeByInstance(note.notebookGuid, 0)
+        node = notebook.addNote(note) 
+
+        #
+        # Expand the notebook so that the new node can be selected. This must
+        # occur after the node is added to the notebook. If done before, it is
+        # possible for the node to get added twice.
+        #
         notebook.expand()
 
-        node = notebook.addNote(note) 
+        #
+        # Re-render the explorer window. This ensures that the new node will
+        # assigned a row number so that it can be selected.
+        #
+        self.render()
         self.selectNode(node)
 
     def addNotebook(self, notebook):
         node = NotebookNode(notebook)
+        registerNode(node)
+
         self.notebooks.append(node)
         self.notebooks.sort(key=lambda n: n.notebook.name.lower())
 
-        registerNode(node)
-
+        #
+        # Re-render the explorer window. This ensures that the new node will
+        # assigned a row number so that it can be selected.
+        #
+        self.render()
         self.selectNode(node)
 
     def addSearchResults(self, results):
@@ -484,7 +500,7 @@ class Explorer(object):
 
         return None
 
-    def getSelectedNotebook(self):
+    def getSelectedNode(self):
         if self.buffer is None:
             return None
 
@@ -495,13 +511,17 @@ class Explorer(object):
 
         key = self.getNodeKey(text)
         if key is not None:
-            node = getNode(key)
-            if isinstance(node, NotebookNode):
+            return getNode(key)
+        return None
+
+    def getSelectedNotebook(self):
+        node = self.getSelectedNode()
+        if isinstance(node, NotebookNode):
+            return node.notebook
+        if isinstance(node, NoteNode): 
+            if isinstance(node.parent, NotebookNode):
+                node = getNode(node.parent.getKey())
                 return node.notebook
-            if isinstance(node, NoteNode): 
-                if isinstance(node.parent, NotebookNode):
-                    node = getNode(node.parent.getKey())
-                    return node.notebook
         return None
 
     def getNodeKey(self, nodeText):
@@ -557,10 +577,6 @@ class Explorer(object):
             self.addTag(tag)
         self.restoreExpandState()
 
-        if self.selectedNode is None:
-            notebook = GeeknoteGetDefaultNotebook()
-            self.selectNotebook(notebook)
-
     def refreshNotebooks(self):
         #
         # If the user already specified which notebooks to load, load just
@@ -605,6 +621,12 @@ class Explorer(object):
 
         origWin = getActiveWindow()
         setActiveBuffer(self.buffer)
+
+        # Save the selected node before redrawing the explorer.
+        self.selectedNode = self.getSelectedNode()
+        if self.selectedNode is None:
+            notebook = GeeknoteGetDefaultNotebook()
+            self.selectNotebook(notebook)
 
         # 
         # Before overwriting the navigation window, look for any changes made
