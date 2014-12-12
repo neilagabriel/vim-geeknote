@@ -2,9 +2,10 @@ import vim
 import re
 import tempfile
 
-from view  import *
-from utils import *
-from conn  import *
+from view   import *
+from utils  import *
+from conn   import *
+from change import *
 
 #======================== Global Setup/Config ================================#
 
@@ -67,6 +68,7 @@ class Node(object):
     def __init__(self, indent=0):
         self.parent    = None
         self.children  = []
+        self.changes   = []
         self.row       = -1
         self.indent    = indent
         self.prefWidth = 0
@@ -87,7 +89,8 @@ class Node(object):
         self.expanded = False
 
     def commitChanges(self):
-        pass
+        for change in self.changes:
+            change.apply()
 
     def expand(self):
         self.expanded = True
@@ -104,7 +107,7 @@ class Node(object):
         return 0
 
     def isExpanded(self):
-        return self.expanded is True
+        return self.expanded
 
     def refresh(self):
         pass
@@ -155,11 +158,11 @@ class NotebookNode(Node):
         if m:
             name = m.group(1).strip()
             if self.name != name:
+                change = NotebookRenamed(self.notebook, name)
+                self.changes.append(change)
+
                 self.setName(name)
                 return True
-        else:
-            print line
-
         return False
 
     def addNote(self, note):
@@ -168,10 +171,6 @@ class NotebookNode(Node):
 
         self.addChild(node)
         return node
-
-    def commitChanges(self):
-        self.notebook.name = self.name
-        GeeknoteUpdateNotebook(self.notebook)
 
     def expand(self):
         if self.loaded is False:
@@ -240,6 +239,9 @@ class NoteNode(Node):
         if m:
             title = m.group(1).strip()
             if self.title != title:
+                change = NoteRenamed(self.note, title)
+                self.changes.append(change)
+
                 self.setTitle(title)
                 return True
         return False
@@ -248,15 +250,6 @@ class NoteNode(Node):
         super(NoteNode, self).activate()
 
         GeeknoteOpenNote(self.note)
-
-    def commitChanges(self):
-        if self.note.title != self.title:
-            self.note.title = self.title
-            GeeknoteUpdateNote(self.note)
-
-        if self.note.notebookGuid != self.notebookGuid:
-            self.note.notebookGuid = self.notebookGuid
-            GeeknoteUpdateNote(self.note)
 
     def getGuid(self):
         return self.note.guid
@@ -338,7 +331,6 @@ class TagNode(Node):
         self.prefWidth = len(line)
 
         buffer.append('{:<50} T[{}]'.format(line, self.getKey()))
-
         self.row = len(buffer)
 
         if self.expanded:
@@ -451,12 +443,13 @@ class Explorer(object):
                    isinstance(node.parent, NotebookNode):
                     parent = self.getNodeParent(row)
                     if (node.parent != parent):
+                        change = NoteMoved(node.note, parent.notebook.guid)
+                        node.changes.append(change)
+
                         node.notebookGuid = parent.notebook.guid
                         parent.expand()
-
                         node.parent.removeChild(node)
                         parent.addChild(node)
-
                         modified = True
 
                 if modified:
