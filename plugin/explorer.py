@@ -191,7 +191,7 @@ class NotebookNode(Node):
         searchWords = 'notebook:"%s"' % self.notebook.name
         return GeeknoteGetNotes(searchWords)
 
-    def render(self, buffer):
+    def render(self, buffer, attribs):
         numNotes = len(self.children)
 
         if self.expanded:
@@ -209,12 +209,13 @@ class NotebookNode(Node):
         line = line.encode('utf8')
         self.prefWidth = len(line)
 
-        buffer.append('{:<50} N[{}]'.format(line, self.getKey()))
+        fmt = '{:<%d} N[{}]' % attribs['keyCol']
+        buffer.append(fmt.format(line, self.getKey()))
         self.row = len(buffer)
 
         if self.expanded:
             for noteNode in self.children:
-                noteNode.render(buffer)
+                noteNode.render(buffer, attribs)
 
     def setName(self, name):
         self.name = name
@@ -264,15 +265,14 @@ class NoteNode(Node):
     def getGuid(self):
         return self.note.guid
 
-    def render(self, buffer):
-        line  = ' ' * (self.indent * 4)
-        line += self.title.decode('utf8')
+    def render(self, buffer, attribs):
+        line = ' ' * (self.indent * 4) + self.title.decode('utf8')
 
         line = line.encode('utf8')
         self.prefWidth = len(line)
 
-        line = '{:<48} n[{}]'.format(line, self.getKey())
-        buffer.append(line)
+        fmt = '{:<%d} n[{}]' % attribs['keyCol']
+        buffer.append(fmt.format(line, self.getKey()))
         self.row = len(buffer)
 
     def setTitle(self, title):
@@ -312,7 +312,7 @@ class TagNode(Node):
         searchWords = 'tag:"%s"' % self.tag.name
         return GeeknoteGetNotes(searchWords)
 
-    def render(self, buffer):
+    def render(self, buffer, attribs):
         numNotes = len(self.children)
 
         if self.expanded:
@@ -330,12 +330,13 @@ class TagNode(Node):
         line = line.encode('utf8')
         self.prefWidth = len(line)
 
-        buffer.append('{:<50} T[{}]'.format(line, self.getKey()))
+        fmt = '{:<%d} T[{}]' % attribs['keyCol']
+        buffer.append(fmt.format(line, self.getKey()))
         self.row = len(buffer)
 
         if self.expanded:
             for noteNode in self.children:
-                noteNode.render(buffer)
+                noteNode.render(buffer, attribs)
 
 #======================== Explorer ===========================================#
 
@@ -517,6 +518,16 @@ class Explorer(object):
                 return node.notebook
         return None
 
+    def getMinWidth(self):
+        maxWidth = 0
+        for key in registry:
+            width = getNode(key).getPreferredWidth()
+            if width > maxWidth:
+                maxWidth = width
+
+        hpad = numberwidth() + foldcolumn() + 1
+        return maxWidth + hpad
+
     def getNodeKey(self, nodeText):
         r = re.compile('^.+\[(.+)\]$')
         m = r.match(nodeText)
@@ -632,30 +643,38 @@ class Explorer(object):
         # Clear the navigation buffer to get rid of old content (if any).
         del self.buffer[:]
 
+        # Prepare rendering attributes
+        attribs = {}
+        attribs['keyCol'] = self.getMinWidth() + 1
+
+        # Create separator
+        fmt = '{:=^%d}' % (attribs['keyCol'] + 41)
+        sep = fmt.format('=')
+
         # Prepare the new content and append it to the navigation buffer.
         content = []
         content.append('Notebooks:')
-        content.append('{:=^92}'.format('='))
+        content.append(sep)
 
         # Render notebooks, notes, tags, and search results
         for node in self.notebooks:
-            node.render(content)
+            node.render(content, attribs)
 
         if len(self.tags) > 0:
             content.append('')
             content.append('Tags:')
-            content.append('{:=^92}'.format('='))
+            content.append(sep)
 
             for node in self.tags:
-                node.render(content)
+                node.render(content, attribs)
 
         if len(self.searchResults) > 0:
              content.append('')
              content.append('Search Results:')
-             content.append('{:=^92}'.format('='))
+             content.append(sep)
 
              for node in self.searchResults:
-                 node.render(content)
+                 node.render(content, attribs)
 
         # Write the content list to the buffer starting at row zero.
         self.buffer.append(content, 0)
@@ -688,14 +707,7 @@ class Explorer(object):
             return
 
         # Otherwise, resize it based on content and caps. 
-        maxWidth = 0
-        for key in registry:
-            width = getNode(key).getPreferredWidth()
-            if width > maxWidth:
-                maxWidth = width
-
-        hpad = numberwidth() + foldcolumn() + 1
-        maxWidth += hpad
+        maxWidth = self.getMinWidth()
 
         if int(vim.eval('exists("g:GeeknoteMaxExplorerWidth")')):
             width = int(vim.eval('g:GeeknoteMaxExplorerWidth'))
