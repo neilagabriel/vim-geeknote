@@ -65,12 +65,14 @@ your notes.
 #### Limit Width
 
 By default, vim-geeknote will attempt to resize the navigation window based on
-its current content. If you have notebooks or notes with very long names you
-may want to use the following option to cap the size of the window:
+its current content, up to 40 columns. If you have notebooks or notes with very
+long names you may want to use the following option:
 
     let g:GeeknoteMaxExplorerWidth=<value>
 
-Where `<value>` is replaced with the max width of the window.
+Where `<value>` is replaced with the max width of the window. Depending on the
+value you specify, this could be used to increase the cap in order to view
+longer names or decrease it to keep the navigation window even smaller.
 
 #### Fix Width
 

@@ -706,14 +706,18 @@ class Explorer(object):
             vim.command("vertical resize %d" % width)
             return
 
-        # Otherwise, resize it based on content and caps. 
-        maxWidth = self.getMinWidth()
-
+        # Get the max allowable width (default is 40 columns)
         if int(vim.eval('exists("g:GeeknoteMaxExplorerWidth")')):
-            width = int(vim.eval('g:GeeknoteMaxExplorerWidth'))
-            if width < maxWidth:
-                maxWidth = width
-        vim.command("vertical resize %d" % maxWidth)
+            maxWidth = int(vim.eval('g:GeeknoteMaxExplorerWidth'))
+        else:
+            maxWidth = 40
+
+        # Get the minimum width needed to see all names/titles
+        minWidth = self.getMinWidth()
+
+        # Fix the width to the minimum of what is required vs. what is needed.
+        width = min(minWidth, maxWidth)
+        vim.command("vertical resize %d" % width)
 
     def restoreExpandState(self):
         for key in self.expandState:
