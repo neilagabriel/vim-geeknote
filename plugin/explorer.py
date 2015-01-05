@@ -1,6 +1,5 @@
 import vim
 import re
-import tempfile
 
 from view   import *
 from utils  import *
@@ -354,8 +353,7 @@ class Explorer(object):
 
         self.refresh()
 
-        self.dataFile = tempfile.NamedTemporaryFile(
-            prefix='__GeeknoteExplorer__', delete=True)
+        self.dataFile = createTempFile(prefix='__GeeknoteExplorer__')
 
         autocmd('BufWritePre' , 
                 self.dataFile.name, 

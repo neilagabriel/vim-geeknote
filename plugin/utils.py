@@ -1,4 +1,15 @@
 import vim
+import tempfile
+
+def createTempFile(**kwargs):
+    if 'prefix' not in kwargs:
+        kwargs['prefix'] = '__Geeknote__'
+
+    if 'dir' not in kwargs:
+        if int(vim.eval('exists("g:GeeknoteScratchDirectory")')):
+            kwargs['dir'] = vim.eval('g:GeeknoteScratchDirectory')
+
+    return tempfile.NamedTemporaryFile(**kwargs)
 
 #======================== Vim Helper Functions  ==============================#
 

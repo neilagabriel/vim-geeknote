@@ -148,6 +148,21 @@ numbers in the navigation window:
 
     autocmd FileType geeknote setlocal nonumber
 
+### Filesystem
+
+vim-geeknote uses temporary files to display the navigation window and for any
+notes that are opened. By default, files are created in the system temp
+directory (ie. `TMPDIR`, `TEMP`, or `TMP`). The following option allows the
+user to specify where all temp (or scratch) files should be maintained. Note
+that vim-geeknote will attempt to cleanup after itself when it is proper to do
+so.
+
+    let g:GeeknoteScratchDirectory=<path>
+
+Where `<path>` is replaced with the desired filesystem location for any and all
+temp files created by vim-geeknote. *Note that the path must exist.* The plugin
+will not attempt to create it.
+
 ## Usage
 
 ### Toggle Geeknote Navigation Window

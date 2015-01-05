@@ -1,5 +1,4 @@
 import vim
-import tempfile
 
 from enml  import *
 from utils import *
@@ -20,8 +19,16 @@ class NoteTracker(object):
 
 # Close all opened notes.
 def GeeknoteCloseAllNotes():
-    for filename in openNotes:
-        os.remove(filename)
+    #
+    # Try to delete any temp files that still exist (is is possible that 
+    # some/all were already garbage collected by the OS.
+    #
+    try:
+        for filename in openNotes:
+            os.remove(filename)
+    except:
+        pass
+
     openNotes.clear()
 
 # Close the note associated with the given buffer name.
@@ -114,8 +121,7 @@ def GeeknoteOpenNote(note):
         content = tools.stdoutEncode(content)
 
         # Write the note's title and content to a temporary file.
-        f = tempfile.NamedTemporaryFile(prefix='__Geeknote__', delete=False)
-
+        f = createTempFile(delete=False)
         f.write(note.title + '\n\n')
         
         isNoteEmpty = not content.strip()
@@ -123,10 +129,13 @@ def GeeknoteOpenNote(note):
             f.write(content)
         else:
             f.write("<add content here>\n")
-        f.close()
+        f.flush()
 
         # Now edit the file in a new buffer within the active window.
         vim.command('edit {}'.format(f.name))
+
+        # Close the file now that it is open in the buffer.
+        f.close()
 
         # Position the cursor at a convenient location if opening an empty note
         if isNoteEmpty:
