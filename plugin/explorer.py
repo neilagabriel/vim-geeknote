@@ -91,6 +91,7 @@ class Node(object):
     def commitChanges(self):
         for change in self.changes:
             change.apply()
+        del self.changes[:]
 
     def expand(self):
         self.expanded = True
@@ -108,6 +109,9 @@ class Node(object):
 
     def isExpanded(self):
         return self.expanded
+
+    def isVisible(self):
+        return self.row != -1
 
     def refresh(self):
         pass
@@ -430,32 +434,37 @@ class Explorer(object):
         registerNode(tagNode)
 
     def applyChanges(self):
-        for row in xrange(len(self.buffer)):
-            line = self.buffer[row]
-            key  = self.getNodeKey(line)
-            if key is not None:
-                node = getNode(key)
+        #
+        # It is possible that user has rearranged (moved) the nodes since the
+        # last time the changes were applied. Refresh them now.
+        #
+        self.updateNodeLineNumbers()
 
-                # Adapt the node based on it's current text.
-                modified = node.adapt(line)
+        # Look for nodes that were renamed
+        for key in registry:
+            node = getNode(key)
+            if node.isVisible():
+                if node.adapt(self.buffer[node.row]):
+                    if node not in self.modifiedNodes:
+                        self.modifiedNodes.append(node)
 
-                # If the node represents a note, check to see if it was moved.
+        # Look for nodes that were moved
+        for key in registry:
+            node = getNode(key)
+            if node.isVisible():
                 if isinstance(node       , NoteNode) and \
                    isinstance(node.parent, NotebookNode):
-                    parent = self.getNodeParent(row)
+                    parent = self.getNodeParent(node.row)
                     if (node.parent != parent):
                         change = NoteMoved(node.note, parent.notebook.guid)
                         node.changes.append(change)
 
-                        node.notebookGuid = parent.notebook.guid
                         parent.expand()
                         node.parent.removeChild(node)
                         parent.addChild(node)
-                        modified = True
 
-                if modified:
-                    if node not in self.modifiedNodes:
-                        self.modifiedNodes.append(node)
+                        if node not in self.modifiedNodes:
+                            self.modifiedNodes.append(node)
 
     def clearSearchResults(self):
         del self.searchResults[:]
@@ -772,3 +781,12 @@ class Explorer(object):
 
         self.hidden = False
 
+    def updateNodeLineNumbers(self):
+        for key in registry:
+            getNode(key).row = -1
+
+        for row in xrange(len(self.buffer)):
+            line = self.buffer[row]
+            key  = self.getNodeKey(line)
+            if key is not None:
+                getNode(key).row = row
