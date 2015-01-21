@@ -359,14 +359,6 @@ class Explorer(object):
 
         self.dataFile = createTempFile(prefix='__GeeknoteExplorer__')
 
-        autocmd('BufWritePre' , 
-                self.dataFile.name, 
-                ':call Vim_GeeknoteCommitStart()')
-
-        autocmd('BufWritePost', 
-                self.dataFile.name, 
-                ':call Vim_GeeknoteCommitComplete()')
-
         autocmd('VimLeave', '*', ':call Vim_GeeknoteTerminate()')
 
     def __del__(self):
@@ -556,6 +548,14 @@ class Explorer(object):
 
         wnum = getActiveWindow()
         bnum = self.buffer.number
+         
+        autocmd('BufWritePre' , 
+                '<buffer>',
+                ':call Vim_GeeknoteCommitStart()')
+
+        autocmd('BufWritePost', 
+                '<buffer>',
+                ':call Vim_GeeknoteCommitComplete()')
 
         setWindowVariable(wnum, 'winfixwidth', True)
         setWindowVariable(wnum, 'wrap'       , False)

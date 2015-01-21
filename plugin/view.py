@@ -149,15 +149,15 @@ def GeeknoteOpenNote(note):
 
         # Register callbacks for the buffer events that affect the note.
         autocmd('BufWritePre', 
-                f.name, 
+                '<buffer>',
                 ':call Vim_GeeknotePrepareToSaveNote("{}")'.format(f.name))
 
         autocmd('BufWritePost',
-                f.name, 
+                '<buffer>',
                 ':call Vim_GeeknoteSaveNote("{}")'.format(f.name))
      
         autocmd('BufDelete',
-                f.name, 
+                '<buffer>',
                 ':call Vim_GeeknoteCloseNote("{}")'.format(f.name))
 
         vim.command("let b:GeeknoteTitle=\"%s\"" % note.title)
