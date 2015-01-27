@@ -19,52 +19,11 @@ if int(vim.eval('exists("g:GeeknoteExplorerNodeClosed")')):
     ExplorerCharClosed = vim.eval(
         'g:GeeknoteExplorerNodeClosed').decode('utf8')
 
-#======================== Registry ===========================================#
-
-#
-# A dictionary containing an entry for all nodes contained in the explorer
-# window, keyed by guid.
-#
-registry = {}
-
-#
-# Maps GUIDs to instance numbers. Each node represents an object. Objects are
-# unique but nodes are not. There can be any number nodes instanciated for an
-# object.  An instance number is used to distinguish nodes for the same object.
-# This container maps an object's GUID to the maximum instance number of any
-# node representing the object (i.e. object node count minus one).
-#
-instanceMap = {}
-
-def registerNode(node):
-    guid = node.getGuid()
-    if guid not in instanceMap:
-        instance = 0
-    else:
-        instance = instanceMap[guid] + 1
-
-    instanceMap[guid] = instance
-
-    key = guid + "(" + str(instance) + ")"
-    node.setKey(key)
-    registry[key] = node
-
-def deleteNodes():
-    registry.clear()
-
-def getNode(key):
-    if key in registry:
-        return registry[key]
-    return None 
-
-def getNodeByInstance(guid, instance):
-    key = guid + "(" + str(instance) + ")"
-    return getNode(key)
-
 #======================== Node ===============================================#
 
 class Node(object):
-    def __init__(self, indent=0):
+    def __init__(self, explorer, indent=0):
+        self.explorer  = explorer
         self.parent    = None
         self.children  = []
         self.changes   = []
@@ -134,8 +93,8 @@ class Node(object):
 #======================== NotebookNode =======================================#
 
 class NotebookNode(Node):
-    def __init__(self, notebook):
-        super(NotebookNode, self).__init__()
+    def __init__(self, explorer, notebook):
+        super(NotebookNode, self).__init__(explorer)
 
         self.notebook = notebook
         self.loaded   = False
@@ -169,8 +128,8 @@ class NotebookNode(Node):
         return False
 
     def addNote(self, note):
-        node = NoteNode(note, self.indent + 1)
-        registerNode(node)
+        node = NoteNode(self, note, self.indent + 1)
+        self.explorer.registerNode(node)
 
         self.addChild(node)
         return node
@@ -226,8 +185,8 @@ class NotebookNode(Node):
 #======================== NoteNode ===========================================#
 
 class NoteNode(Node):
-    def __init__(self, note, indent=1):
-        super(NoteNode, self).__init__(indent)
+    def __init__(self, explorer, note, indent=1):
+        super(NoteNode, self).__init__(explorer, indent)
 
         self.note  = note
         self.title = None
@@ -284,16 +243,16 @@ class NoteNode(Node):
 #======================== TagNode ============================================#
 
 class TagNode(Node):
-    def __init__(self, tag, indent=0):
-        super(TagNode, self).__init__(indent)
+    def __init__(self, explorer, tag, indent=0):
+        super(TagNode, self).__init__(explorer, indent)
 
         self.tag    = tag
         self.loaded = False
         self.setName(tag.name)
 
     def addNote(self, note):
-        node = NoteNode(note, self.indent + 1)
-        registerNode(node)
+        node = NoteNode(self.explorer, note, self.indent + 1)
+        self.explorer.registerNode(node)
 
         self.addChild(node)
         return node
@@ -355,6 +314,23 @@ class Explorer(object):
         self.expandState   = {}
         self.searchResults = []
 
+        #
+        # A dictionary containing an entry for all nodes contained in the
+        # explorer window, keyed by guid.
+        #
+        self.registry = {}
+        
+        #
+        # Maps GUIDs to instance numbers. Each node represents an object.
+        # Objects are unique but nodes are not. There can be any number nodes
+        # instanciated for an object.  An instance number is used to
+        # distinguish nodes for the same object.  This container maps an
+        # object's GUID to the maximum instance number of any node representing
+        # the object (i.e. object node count minus one).
+        #
+        self.instanceMap = {}
+
+        # Pull down the initial data from the server (notebooks, notes, etc.)
         self.refresh()
 
         self.dataFile = createTempFile(prefix='__GeeknoteExplorer__')
@@ -366,11 +342,11 @@ class Explorer(object):
             self.dataFile.close()
         except:
             pass
-
+    
     def activateNode(self, line):
         key = self.getNodeKey(line)
         if key is not None:
-            node = getNode(key)
+            node = self.getNode(key)
             node.activate()
 
             # Rerender the navigation window. Keep the current cursor postion.
@@ -379,7 +355,7 @@ class Explorer(object):
             vim.current.window.cursor = (row, col)
 
     def addNote(self, note):
-        notebook = getNodeByInstance(note.notebookGuid, 0)
+        notebook = self.getNodeByInstance(note.notebookGuid, 0)
         node = notebook.addNote(note) 
 
         #
@@ -397,8 +373,8 @@ class Explorer(object):
         self.selectNode(node)
 
     def addNotebook(self, notebook):
-        node = NotebookNode(notebook)
-        registerNode(node)
+        node = NotebookNode(self, notebook)
+        self.registerNode(node)
 
         self.notebooks.append(node)
         self.notebooks.sort(key=lambda n: n.notebook.name.lower())
@@ -412,16 +388,16 @@ class Explorer(object):
 
     def addSearchResults(self, results):
         for note in results:
-            node = NoteNode(note, 0)
-            registerNode(node)
+            node = NoteNode(self, note, 0)
+            self.registerNode(node)
             self.searchResults.append(node)
 
     def addTag(self, tag):
-        tagNode = TagNode(tag)
+        tagNode = TagNode(self, tag)
         self.tags.append(tagNode)
         self.tags.sort(key=lambda t: t.tag.name.lower())
 
-        registerNode(tagNode)
+        self.registerNode(tagNode)
 
     def applyChanges(self):
         #
@@ -431,16 +407,16 @@ class Explorer(object):
         self.updateNodeLineNumbers()
 
         # Look for nodes that were renamed
-        for key in registry:
-            node = getNode(key)
+        for key in self.registry:
+            node = self.getNode(key)
             if node.isVisible():
                 if node.adapt(self.buffer[node.row]):
                     if node not in self.modifiedNodes:
                         self.modifiedNodes.append(node)
 
         # Look for nodes that were moved
-        for key in registry:
-            node = getNode(key)
+        for key in self.registry:
+            node = self.getNode(key)
             if node.isVisible():
                 if isinstance(node       , NoteNode) and \
                    isinstance(node.parent, NotebookNode):
@@ -467,17 +443,24 @@ class Explorer(object):
             node.commitChanges()
 
         for node in self.modifiedNodes:
-            for key in registry:
-                tempNode = getNode(key)
+            for key in self.registry:
+                tempNode = self.getNode(key)
                 if tempNode.getGuid() == node.getGuid():
                     if tempNode.getKey() != node.getKey():
                         tempNode.refresh()
 
         del self.modifiedNodes[:]
 
+    def deleteNodes(self):
+        self.registry.clear()
+
+    def getNodeByInstance(self, guid, instance):
+        key = guid + "(" + str(instance) + ")"
+        return self.getNode(key)
+    
     def getNodeParent(self, row):
         key  = self.getNodeKey(self.buffer[row])
-        node = getNode(key)
+        node = self.getNode(key)
 
         # Only notes have parents
         if not isinstance(node, NoteNode):
@@ -486,7 +469,7 @@ class Explorer(object):
         while row > 0:
             key = self.getNodeKey(self.buffer[row])
             if key is not None: 
-                node = getNode(key)
+                node = self.getNode(key)
                 if not isinstance(node, NoteNode):
                     return node
             row -= 1
@@ -504,7 +487,7 @@ class Explorer(object):
 
         key = self.getNodeKey(text)
         if key is not None:
-            return getNode(key)
+            return self.getNode(key)
         return None
 
     def getSelectedNotebook(self):
@@ -513,19 +496,24 @@ class Explorer(object):
             return node.notebook
         if isinstance(node, NoteNode): 
             if isinstance(node.parent, NotebookNode):
-                node = getNode(node.parent.getKey())
+                node = self.getNode(node.parent.getKey())
                 return node.notebook
         return None
 
     def getMinWidth(self):
         maxWidth = 0
-        for key in registry:
-            width = getNode(key).getPreferredWidth()
+        for key in self.registry:
+            width = self.getNode(key).getPreferredWidth()
             if width > maxWidth:
                 maxWidth = width
 
         hpad = numberwidth() + foldcolumn() + 1
         return maxWidth + hpad
+
+    def getNode(self, key):
+        if key in self.registry:
+            return self.registry[key]
+        return None 
 
     def getNodeKey(self, nodeText):
         r = re.compile('^.+\[(.+)\]$')
@@ -575,7 +563,7 @@ class Explorer(object):
 
     def refresh(self):
         self.saveExpandState()
-        deleteNodes()
+        self.deleteNodes()
 
         self.noteCounts = GeeknoteFindNoteCounts()
 
@@ -624,6 +612,19 @@ class Explorer(object):
                     if r.search(notebook.name):
                         self.addNotebook(notebook)
                         break
+
+    def registerNode(self, node):
+        guid = node.getGuid()
+        if guid not in self.instanceMap:
+            instance = 0
+        else:
+            instance = self.instanceMap[guid] + 1
+    
+        self.instanceMap[guid] = instance
+    
+        key = guid + "(" + str(instance) + ")"
+        node.setKey(key)
+        self.registry[key] = node
 
     # Render the navigation buffer in the navigation window..
     def render(self):
@@ -728,7 +729,7 @@ class Explorer(object):
 
     def restoreExpandState(self):
         for key in self.expandState:
-            node = getNode(key)
+            node = self.getNode(key)
             if node is not None:
                 if self.expandState[key]:
                     node.expand()
@@ -757,7 +758,7 @@ class Explorer(object):
         # Notebooks never have more than one assoicated node, therefore, use
         # zero for the instance number.
         #
-        node = getNodeByInstance(notebook.guid, 0)
+        node = self.getNodeByInstance(notebook.guid, 0)
         if node is not None:
             self.selectNode(node)
 
@@ -780,11 +781,11 @@ class Explorer(object):
         self.hidden = False
 
     def updateNodeLineNumbers(self):
-        for key in registry:
-            getNode(key).row = -1
+        for key in self.registry:
+            self.getNode(key).row = -1
 
         for row in xrange(len(self.buffer)):
             line = self.buffer[row]
             key  = self.getNodeKey(line)
             if key is not None:
-                getNode(key).row = row
+                self.getNode(key).row = row
