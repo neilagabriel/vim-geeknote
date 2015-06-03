@@ -5,6 +5,7 @@ from explorer import Explorer
 from view     import *
 from utils    import *
 from enml     import *
+from change_manager import *
 
 import evernote.edam.type.ttypes  as Types
 import evernote.edam.error.ttypes as Errors
@@ -27,7 +28,8 @@ import evernote.edam.error.ttypes as Errors
 
 #======================== Globals ============================================#
 
-explorer = Explorer()
+changeManager = ChangeManager()
+explorer = Explorer(changeManager)
 
 #======================== Geeknote Functions  ================================#
 

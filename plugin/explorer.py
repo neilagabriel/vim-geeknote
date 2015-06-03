@@ -5,6 +5,7 @@ from view   import *
 from utils  import *
 from conn   import *
 from change import *
+from change_manager import *
 
 #======================== Global Setup/Config ================================#
 
@@ -303,7 +304,7 @@ class TagNode(Node):
 #======================== Explorer ===========================================#
 
 class Explorer(object):
-    def __init__(self):
+    def __init__(self, changeManager):
         self.hidden        = True
         self.selectedNode  = None
         self.notebooks     = []
@@ -313,6 +314,8 @@ class Explorer(object):
         self.buffer        = None
         self.expandState   = {}
         self.searchResults = []
+
+        self.changeManager = changeManager
 
         #
         # A dictionary containing an entry for all nodes contained in the
@@ -560,6 +563,9 @@ class Explorer(object):
     #
     def isHidden(self):
         return self.hidden
+
+    def noteChanged(self, change):
+        pass
 
     def refresh(self):
         self.saveExpandState()
