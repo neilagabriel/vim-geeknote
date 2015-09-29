@@ -42,7 +42,7 @@ Integrates Geeknote/Evernote into Vim.
 
 Use the option `g:GeeknoteNeovimMode` to use vim-geeknote in Neovim. E.g.:
 
-    let g:GeeknoteNeovim="True"
+    let g:GeeknoteNeovimMode="True"
 
 This option is required as the 'vim' python modules provided by standard vim
 and neovim are not 100% compatible. If/when it becomes possible to detect the
