@@ -2,8 +2,9 @@ import vim
 import os
 import re
 
-from geeknote.out import *
-from bs4          import BeautifulSoup
+from geeknote.out    import *
+from geeknote.editor import Editor
+from bs4             import BeautifulSoup
 
 def ENMLtoText(contentENML):
     format = 'vim-default'
