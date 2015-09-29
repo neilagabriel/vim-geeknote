@@ -4,7 +4,7 @@
 
 ## Intro 
 
-Integrates Geeknote/Evernote into Vim.
+Integrates Geeknote/Evernote into Vim and Neovim.
 - Notebook navigation, creation, and renaming
 - Note viewing, renaming, editing, and creation.
 
