@@ -1,6 +1,10 @@
 import vim
 import tempfile
 
+GeeknoteNeovimMode = False
+if int(vim.eval('exists("g:GeeknoteNeovimMode")')):
+    GeeknoteNeovimMode = vim.eval('g:GeeknoteNeovimMode')
+
 def createTempFile(**kwargs):
     if 'prefix' not in kwargs:
         kwargs['prefix'] = '__Geeknote__'
@@ -80,15 +84,21 @@ def bufInWindows(bnum):
      return cnt
 
 def getBufferName(bnum):
+    if GeeknoteNeovimMode:
+        bnum -= 1
     return vim.buffers[bnum].name
 
 def getBufferVariable(bnum, var):
+    if GeeknoteNeovimMode:
+        bnum -= 1
     return vim.buffers[bnum].options[var]
  
 def getWindowVariable(wnum, var):
     return vim.windows[wnum-1].options[var]
 
 def setBufferVariable(bnum, var, value):
+    if GeeknoteNeovimMode:
+        bnum -= 1
     vim.buffers[bnum].options[var] = value
  
 def setWindowVariable(wnum, var, value):

@@ -31,9 +31,22 @@ Integrates Geeknote/Evernote into Vim.
 * [Pathogen](https://github.com/tpope/vim-pathogen)
    * `git clone https://github.com/neilagabriel/vim-geeknote ~/.vim/bundle/vim-geeknote`
 
-3. If using macvim refer to [README_mac.md](README_mac.md) for additional instructions.
+3. If using macvim, refer to [README_mac.md](README_mac.md) for additional instructions.
+
+4. If using neovim, refer to 'Neovim Mode' section in the 'Optional Setup and
+   Configuration' section that follows.
 
 ## Optional Setup and Configuration
+
+### Neovim Mode
+
+Use the option `g:GeeknoteNeovimMode` to use vim-geeknote in Neovim. E.g.:
+
+    let g:GeeknoteNeovim="True"
+
+This option is required as the 'vim' python modules provided by standard vim
+and neovim are not 100% compatible. If/when it becomes possible to detect the
+use of neovim at runtime, this option will be removed.
 
 ### Quick toggle
 
