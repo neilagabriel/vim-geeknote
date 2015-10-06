@@ -2,6 +2,12 @@ python import sys
 python import vim
 python sys.path.append(vim.eval('expand("<sfile>:h")'))
 
+" ---------------------- Configuration ----------------------------------------
+
+if has('nvim')
+    let g:GeeknoteNeovimMode="True"
+endif
+
 " ---------------------- Functions --------------------------------------------
 
 function! Vim_GeeknoteTerminate()
