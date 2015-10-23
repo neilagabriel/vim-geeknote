@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import vim
 import tempfile
 
@@ -8,6 +9,12 @@ if int(vim.eval('exists("g:GeeknoteNeovimMode")')):
 def createTempFile(**kwargs):
     if 'prefix' not in kwargs:
         kwargs['prefix'] = '__Geeknote__'
+
+    if 'suffix' not in kwargs:
+        geeknoteformat = 'markdown'
+        if int(vim.eval('exists("g:GeeknoteFormat")')):
+            geeknoteformat = vim.eval('g:GeeknoteFormat')
+        kwargs['suffix'] = '.{}'.format(geeknoteformat)
 
     if 'dir' not in kwargs:
         if int(vim.eval('exists("g:GeeknoteScratchDirectory")')):

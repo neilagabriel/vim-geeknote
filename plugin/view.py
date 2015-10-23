@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import vim
 
 from enml  import *
@@ -178,8 +179,8 @@ def GeeknoteOpenNote(note):
     # TODO: Figure out why setting the 'syntax' buffer option alone does not
     #       enable syntax highlighting and why setlocal is needed instead.
     #
-    vim.current.buffer.options['filetype'] = 'markdown'
-    vim.command('setlocal syntax=markdown')
+    # vim.current.buffer.options['filetype'] = 'markdown'
+    # vim.command('setlocal syntax=markdown')
 
     # Now restore the original window.
     setActiveWindow(origWin)
